@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 
@@ -43,7 +43,7 @@ const TWEETS = [
   { handle: "RaoulGMI",    name: "Raoul Pal",          text: "The Everything Code keeps playing out. Liquidity drives all assets. Watch the Fed balance sheet not the Fed funds rate.", likes: "12.8K", time: "2h" },
   { handle: "APompliano",  name: "Anthony Pompliano",  text: "Bitcoin is up 1.8% today while the dollar weakens. This is the trade of the decade and most people are still sleeping.", likes: "9.3K",  time: "2h" },
   { handle: "elerianm",    name: "Mohamed El-Erian",   text: "Today's CPI print will be closely watched. Markets have priced in a benign outcome — any upside surprise risks a sharp repricing.", likes: "7.1K",  time: "3h" },
-  { handle: "\LukeGromen", name: "Luke Gromen",        text: "The bond market is telling you something the equity market hasn't fully priced yet. Fiscal dominance is here.", likes: "5.9K",  time: "4h" },
+  { handle: "LukeGromen", name: "Luke Gromen",        text: "The bond market is telling you something the equity market hasn't fully priced yet. Fiscal dominance is here.", likes: "5.9K",  time: "4h" },
   { handle: "stoolpresidente", name: "Dave Portnoy",   text: "NVDA ripping again. Told you. Stocks only go up.", likes: "22.1K", time: "1h" },
   { handle: "zerohedge",   name: "ZeroHedge",          text: "JPMorgan cuts GDP forecast to 0.3% for Q2. Stagflation risks rising, strategists warn.", likes: "6.4K",  time: "3h" },
 ];
