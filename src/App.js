@@ -491,7 +491,8 @@ export default function App(){
   const [briefDone,setBriefDone]=useState(false);
   const [modal,    setModal]    =useState(null);
   const [search,   setSearch]   =useState("");
-  const [searching,setSearching]=useState(false);
+const [searching,setSearching]=useState(false);
+const [customQ,  setCustomQ]  =useState({});
   // Pinned watchlist — persisted to localStorage
   const [pinned,   setPinned]   =useState(()=>{
     try{ return new Set(JSON.parse(localStorage.getItem("am_pinned")||"[]")); }
