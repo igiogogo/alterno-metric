@@ -5,26 +5,20 @@ const FINNHUB        = "https://finnhub.io/api/v1";
 const COINGECKO      = "https://api.coingecko.com/api/v3";
 const POLYMARKET_API = "https://gamma-api.polymarket.com";
 
-// ── Stock logo CDN (free, no key, replaces Clearbit which shut down Dec 2025)
-// Format: https://cdn.tickerlogos.com/{domain}
+// Stock logo CDN (tickerlogos.com — free, no key)
 const STOCK_DOMAINS = {
-  SPY:"ssga.com", QQQ:"invesco.com", NVDA:"nvidia.com", AAPL:"apple.com",
-  TSLA:"tesla.com", META:"meta.com", MSFT:"microsoft.com", AMZN:"amazon.com",
-  GOOGL:"google.com", GOOG:"google.com", NFLX:"netflix.com", AMD:"amd.com",
-  INTC:"intel.com", COIN:"coinbase.com", JPM:"jpmorganchase.com",
-  GS:"goldmansachs.com", BAC:"bankofamerica.com", WMT:"walmart.com",
-  DIS:"thewaltdisneycompany.com", UBER:"uber.com", ABNB:"airbnb.com",
-  V:"visa.com", MA:"mastercard.com", PYPL:"paypal.com", SQ:"block.xyz",
-  CRM:"salesforce.com", BA:"boeing.com", KO:"coca-colacompany.com",
-  PEP:"pepsico.com", NKE:"nike.com", SBUX:"starbucks.com", MCD:"mcdonalds.com",
-  SHOP:"shopify.com", SPOT:"spotify.com", SNAP:"snap.com", HOOD:"robinhood.com",
-  PLTR:"palantir.com", ARM:"arm.com", SMCI:"supermicro.com",
+  SPY:"ssga.com",QQQ:"invesco.com",NVDA:"nvidia.com",AAPL:"apple.com",TSLA:"tesla.com",
+  META:"meta.com",MSFT:"microsoft.com",AMZN:"amazon.com",GOOGL:"google.com",GOOG:"google.com",
+  NFLX:"netflix.com",AMD:"amd.com",INTC:"intel.com",COIN:"coinbase.com",
+  JPM:"jpmorganchase.com",GS:"goldmansachs.com",BAC:"bankofamerica.com",WMT:"walmart.com",
+  DIS:"thewaltdisneycompany.com",UBER:"uber.com",ABNB:"airbnb.com",
+  V:"visa.com",MA:"mastercard.com",PYPL:"paypal.com",SQ:"block.xyz",
+  CRM:"salesforce.com",BA:"boeing.com",KO:"coca-colacompany.com",PEP:"pepsico.com",
+  NKE:"nike.com",SBUX:"starbucks.com",MCD:"mcdonalds.com",SHOP:"shopify.com",
+  SPOT:"spotify.com",SNAP:"snap.com",HOOD:"robinhood.com",PLTR:"palantir.com",
+  ARM:"arm.com",SMCI:"supermicro.com",
 };
-const tickerLogoUrl = (ticker) => {
-  const domain = STOCK_DOMAINS[ticker];
-  return domain ? `https://cdn.tickerlogos.com/${domain}` : null;
-};
-
+const tickerLogo = (t) => STOCK_DOMAINS[t] ? `https://cdn.tickerlogos.com/${STOCK_DOMAINS[t]}` : null;
 const CG_DAYS = {"1W":"7","1M":"30","3M":"90","1Y":"365","5Y":"max"};
 
 const STOCK_WATCHLIST = [
@@ -34,7 +28,6 @@ const STOCK_WATCHLIST = [
   {ticker:"MSFT",name:"Microsoft",type:"stock"},{ticker:"AMZN",name:"Amazon",type:"stock"},
   {ticker:"GOOGL",name:"Alphabet",type:"stock"},
 ];
-
 const POLY_KEYWORDS = ["fed","rate","recession","bitcoin","inflation","oil","iran","ukraine","china","tariff","gdp","crypto"];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -42,41 +35,33 @@ const fmtPrice =(n)=>{if(!n&&n!==0)return"—";if(n>=10000)return n.toLocaleStri
 const fmtPct   =(n)=>(!n&&n!==0)?"—":(n>=0?"+":"")+n.toFixed(2)+"%";
 const fmtLarge =(n)=>{if(!n)return"—";if(n>=1e12)return"$"+(n/1e12).toFixed(2)+"T";if(n>=1e9)return"$"+(n/1e9).toFixed(2)+"B";if(n>=1e6)return"$"+(n/1e6).toFixed(2)+"M";return"$"+n.toLocaleString();};
 const timeAgo  =(ts)=>{if(!ts)return"";const s=Math.floor(Date.now()/1000-ts);if(s<60)return s+"s ago";if(s<3600)return Math.floor(s/60)+"m ago";if(s<86400)return Math.floor(s/3600)+"h ago";return Math.floor(s/86400)+"d ago";};
-const isCryptoQ  =(q)=>q?.type==="crypto";
+const isCryptoQ=(q)=>q?.type==="crypto";
 
-// ─── STOCK LOGO ───────────────────────────────────────────────────────────────
-function StockLogo({ticker, size=34}){
-  const [err,setErr] = useState(false);
-  const url = tickerLogoUrl(ticker);
-  if(url && !err){
-    return(
-      <div style={{width:size,height:size,borderRadius:size/3.5,overflow:"hidden",flexShrink:0,background:"#f8fafc",border:"1px solid #e2e8f0",display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <img src={url} alt={ticker} style={{width:size*0.78,height:size*0.78,objectFit:"contain"}}
-          onError={()=>setErr(true)}/>
-      </div>
-    );
-  }
+// ─── LOGO COMPONENTS ──────────────────────────────────────────────────────────
+function StockLogo({ticker,size=34}){
+  const [err,setErr]=useState(false);
+  const url=tickerLogo(ticker);
+  if(url&&!err) return(
+    <div style={{width:size,height:size,borderRadius:size/3.5,overflow:"hidden",flexShrink:0,background:"#f8fafc",border:"1px solid #e2e8f0",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <img src={url} alt={ticker} style={{width:size*0.78,height:size*0.78,objectFit:"contain"}} onError={()=>setErr(true)}/>
+    </div>
+  );
   return(
     <div style={{width:size,height:size,borderRadius:size/3.5,background:"linear-gradient(135deg,#eff6ff,#dbeafe)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:"1px solid #bfdbfe"}}>
-      <span style={{fontSize:Math.max(8,size*0.26),fontWeight:700,color:"#1d4ed8",letterSpacing:"-0.02em"}}>{ticker?.slice(0,4)}</span>
+      <span style={{fontSize:Math.max(8,size*0.26),fontWeight:700,color:"#1d4ed8"}}>{ticker?.slice(0,4)}</span>
     </div>
   );
 }
 
-// ─── CRYPTO LOGO ─────────────────────────────────────────────────────────────
-// Uses the image URL returned directly from CoinGecko /coins/markets
-function CryptoLogo({imageUrl, symbol, size=34}){
-  const [err,setErr] = useState(false);
-  // Derive a colour from the symbol for fallback
-  const colors = {BTC:"#f7931a",ETH:"#627eea",SOL:"#9945ff",BNB:"#f3ba2f",XRP:"#00aae4",ADA:"#0033ad",DOGE:"#c2a633",AVAX:"#e84142",MATIC:"#8247e5",LINK:"#2a5ada",DOT:"#e6007a",UNI:"#ff007a",LTC:"#bfbbbb",ATOM:"#6f7390",NEAR:"#00c08b",OP:"#ff0420",ARB:"#12aaff",SUI:"#4da2ff",APT:"#00c2b3",FTM:"#1969ff",INJ:"#00b2ff",TIA:"#7b2fff"};
-  const col = colors[symbol?.toUpperCase()] || "#7c3aed";
-  if(imageUrl && !err){
-    return(
-      <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",flexShrink:0,background:`${col}12`,border:`1px solid ${col}25`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <img src={imageUrl} alt={symbol} style={{width:size*0.78,height:size*0.78,objectFit:"contain"}} onError={()=>setErr(true)}/>
-      </div>
-    );
-  }
+function CryptoLogo({imageUrl,symbol,size=34}){
+  const [err,setErr]=useState(false);
+  const colors={BTC:"#f7931a",ETH:"#627eea",SOL:"#9945ff",BNB:"#f3ba2f",XRP:"#00aae4",ADA:"#0033ad",DOGE:"#c2a633",AVAX:"#e84142"};
+  const col=colors[symbol?.toUpperCase()]||"#7c3aed";
+  if(imageUrl&&!err) return(
+    <div style={{width:size,height:size,borderRadius:"50%",overflow:"hidden",flexShrink:0,background:`${col}12`,border:`1px solid ${col}25`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <img src={imageUrl} alt={symbol} style={{width:size*0.78,height:size*0.78,objectFit:"contain"}} onError={()=>setErr(true)}/>
+    </div>
+  );
   return(
     <div style={{width:size,height:size,borderRadius:"50%",background:`${col}15`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:`1px solid ${col}25`}}>
       <span style={{fontSize:size*0.26,fontWeight:800,color:col}}>{symbol?.slice(0,3)}</span>
@@ -84,16 +69,15 @@ function CryptoLogo({imageUrl, symbol, size=34}){
   );
 }
 
-function AssetLogo({q, size=34}){
-  if(isCryptoQ(q)) return <CryptoLogo imageUrl={q.image} symbol={q.symbol} size={size}/>;
-  return <StockLogo ticker={q.ticker} size={size}/>;
+function AssetLogo({q,size=34}){
+  return isCryptoQ(q)?<CryptoLogo imageUrl={q.image} symbol={q.symbol} size={size}/>:<StockLogo ticker={q.ticker} size={size}/>;
 }
 
 // ─── SPARKLINE ────────────────────────────────────────────────────────────────
 function Spark({up,w=80,h=32}){
   const seed=up?1:-1;
   const raw=Array.from({length:16},(_,i)=>(Math.sin(i*2.1+seed*0.9)+Math.cos(i*1.3)*0.4)*3);
-  let acc=0; const cum=raw.map(v=>{acc+=v;return acc;});
+  let acc=0;const cum=raw.map(v=>{acc+=v;return acc;});
   const mn=Math.min(...cum),mx=Math.max(...cum);
   const norm=cum.map(v=>((v-mn)/(mx-mn||1))*(h-4)+2);
   const pts=norm.map((y,i)=>`${(i/15)*w},${h-y}`).join(" ");
@@ -156,7 +140,6 @@ function PriceChart({q}){
   const [error,setError]=useState(false);
   const canvasRef=useRef(null);
   const crypto=isCryptoQ(q);
-
   useEffect(()=>{
     setLoading(true);setData([]);setError(false);
     let cancelled=false;
@@ -164,8 +147,7 @@ function PriceChart({q}){
       try{
         let chartData=[];
         if(crypto){
-          const cgId=q.cgId;
-          if(!cgId){setError(true);setLoading(false);return;}
+          const cgId=q.cgId;if(!cgId){setError(true);setLoading(false);return;}
           await new Promise(r=>setTimeout(r,300));
           const res=await fetch(`${COINGECKO}/coins/${cgId}/market_chart?vs_currency=usd&days=${CG_DAYS[range]||"30"}&precision=4`);
           if(!res.ok){setError(true);setLoading(false);return;}
@@ -175,25 +157,17 @@ function PriceChart({q}){
           const now=Math.floor(Date.now()/1000);
           const fromMap={"1W":now-604800,"1M":now-2592000,"3M":now-7776000,"1Y":now-31536000,"5Y":now-157680000};
           const resMap={"1W":"60","1M":"D","3M":"D","1Y":"W","5Y":"M"};
-          if(!FINNHUB_KEY){
-            const from=fromMap[range];let val=100;
-            chartData=Array.from({length:60},(_,i)=>{val+=(Math.random()-0.48)*3;return{t:(from+(i/59)*(now-from))*1000,c:Math.max(10,val)};});
-          } else {
-            const res=await fetch(`${FINNHUB}/stock/candle?symbol=${q.ticker}&resolution=${resMap[range]}&from=${fromMap[range]}&to=${now}&token=${FINNHUB_KEY}`);
-            const d=await res.json();
-            if(d.s==="ok"&&d.c?.length>1)chartData=d.t.map((t,i)=>({t:t*1000,c:d.c[i]}));
-          }
+          if(!FINNHUB_KEY){const from=fromMap[range];let val=100;chartData=Array.from({length:60},(_,i)=>{val+=(Math.random()-0.48)*3;return{t:(from+(i/59)*(now-from))*1000,c:Math.max(10,val)};});}
+          else{const res=await fetch(`${FINNHUB}/stock/candle?symbol=${q.ticker}&resolution=${resMap[range]}&from=${fromMap[range]}&to=${now}&token=${FINNHUB_KEY}`);const d=await res.json();if(d.s==="ok"&&d.c?.length>1)chartData=d.t.map((t,i)=>({t:t*1000,c:d.c[i]}));}
         }
         if(!cancelled){if(chartData.length>1)setData(chartData);else setError(true);setLoading(false);}
       }catch{if(!cancelled){setError(true);setLoading(false);}}
     };
     load();return()=>{cancelled=true;};
-  },[q.ticker,q.cgId,range,crypto]); // eslint-disable-line
-
+  },[q.id,range,crypto,q.cgId]); // eslint-disable-line
   useEffect(()=>{if(!loading&&data.length>1&&canvasRef.current)drawChart(canvasRef.current,data);},[data,loading]);
   const isUp=data.length>1&&data[data.length-1].c>=data[0].c;
   const pct=data.length>1?((data[data.length-1].c-data[0].c)/data[0].c*100).toFixed(2):null;
-
   return(
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
@@ -230,35 +204,27 @@ function AssetModal({q,onClose,C,pinned,onToggle}){
   const [loading,setLoading]=useState(true);
   const crypto=isCryptoQ(q);
   const isPinned=pinned.has(q.id);
-
   useEffect(()=>{
     const load=async()=>{
       try{
         if(crypto){
           const res=await fetch(`${COINGECKO}/coins/${q.cgId}?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=false`);
           const d=await res.json();const md=d.market_data;
-          setQuote({c:md.current_price?.usd,d:md.price_change_24h,dp:md.price_change_percentage_24h,h:md.high_24h?.usd,l:md.low_24h?.usd,pc:md.current_price?.usd-(md.price_change_24h||0)});
+          setQuote({c:md.current_price?.usd,d:md.price_change_24h,dp:md.price_change_percentage_24h,h:md.high_24h?.usd,l:md.low_24h?.usd});
           setDetails({name:d.name,marketCap:md.market_cap?.usd,volume24h:md.total_volume?.usd,ath:md.ath?.usd,athDate:md.ath_date?.usd?.slice(0,10),atl:md.atl?.usd,circulatingSupply:md.circulating_supply,totalSupply:md.total_supply,rank:d.market_cap_rank,description:d.description?.en?.replace(/<[^>]*>/g,"").split(".")[0]});
         } else {
-          if(!FINNHUB_KEY){
-            setQuote({c:q.c,d:q.c*(q.dp||0)/100,dp:q.dp||0,h:q.c*1.01,l:q.c*0.99,pc:q.c-(q.c*(q.dp||0)/100)});
-            setDetails({name:q.name,exchange:"NASDAQ",industry:"Technology",marketCap:null,pe:null,eps:null,high52w:null,low52w:null,beta:null});
-            setLoading(false);return;
-          }
+          if(!FINNHUB_KEY){setQuote({c:q.c,d:q.c*(q.dp||0)/100,dp:q.dp||0,h:q.c*1.01,l:q.c*0.99,pc:q.c-(q.c*(q.dp||0)/100)});setDetails({name:q.name,exchange:"NASDAQ",industry:"Technology",marketCap:null,pe:null,eps:null,high52w:null,low52w:null,beta:null});setLoading(false);return;}
           const [qt,p,m]=await Promise.all([
             fetch(`${FINNHUB}/quote?symbol=${q.ticker}&token=${FINNHUB_KEY}`).then(r=>r.json()),
             fetch(`${FINNHUB}/stock/profile2?symbol=${q.ticker}&token=${FINNHUB_KEY}`).then(r=>r.json()),
             fetch(`${FINNHUB}/stock/metric?symbol=${q.ticker}&metric=all&token=${FINNHUB_KEY}`).then(r=>r.json()),
           ]);
-          setQuote(qt);
-          setDetails({name:p.name||q.name,exchange:p.exchange,industry:p.finnhubIndustry,marketCap:(p.marketCapitalization||0)*1e6,pe:m?.metric?.peNormalizedAnnual,eps:m?.metric?.epsNormalizedAnnual,high52w:m?.metric?.["52WeekHigh"],low52w:m?.metric?.["52WeekLow"],beta:m?.metric?.beta});
+          setQuote(qt);setDetails({name:p.name||q.name,exchange:p.exchange,industry:p.finnhubIndustry,marketCap:(p.marketCapitalization||0)*1e6,pe:m?.metric?.peNormalizedAnnual,eps:m?.metric?.epsNormalizedAnnual,high52w:m?.metric?.["52WeekHigh"],low52w:m?.metric?.["52WeekLow"],beta:m?.metric?.beta});
         }
       }catch(e){console.error(e);}
       setLoading(false);
-    };
-    load();
+    };load();
   },[q.id]); // eslint-disable-line
-
   const up=(quote?.dp||0)>=0;
   const Stat=({label,value,sub})=>(
     <div style={{background:C.bg,borderRadius:10,padding:"11px 13px"}}>
@@ -267,10 +233,8 @@ function AssetModal({q,onClose,C,pinned,onToggle}){
       {sub&&<div style={{fontSize:10,color:C.faint,marginTop:2}}>{sub}</div>}
     </div>
   );
-
   return(
-    <div style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.55)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:20,backdropFilter:"blur(6px)"}}
-         onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.55)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:20,backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div style={{background:C.surface,borderRadius:20,width:"100%",maxWidth:660,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 24px 64px rgba(0,0,0,0.22)"}}>
         <div style={{padding:"16px 22px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,background:C.surface,zIndex:1,borderRadius:"20px 20px 0 0"}}>
           <AssetLogo q={q} size={42}/>
@@ -290,46 +254,158 @@ function AssetModal({q,onClose,C,pinned,onToggle}){
           <button onClick={onClose} style={{width:30,height:30,borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",cursor:"pointer",color:C.muted,fontSize:16,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
         </div>
         <div style={{padding:"18px 22px"}}>
-          {loading
-            ?<div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:56,gap:10,color:C.muted,fontSize:13}}><span style={{display:"inline-block",width:20,height:20,border:`2.5px solid ${C.border}`,borderTopColor:C.accent,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>Loading…</div>
-            :<>
-              <div style={{display:"flex",alignItems:"flex-end",gap:12,marginBottom:16}}>
-                <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:34,fontWeight:800,color:C.text,letterSpacing:"-0.03em"}}>${fmtPrice(quote?.c)}</span>
-                <div style={{paddingBottom:4}}>
-                  <span style={{fontSize:14,fontWeight:700,color:up?C.green:C.red}}>{up?"↑":"↓"} ${fmtPrice(Math.abs(quote?.d||0))} ({fmtPct(quote?.dp)})</span>
-                  <div style={{fontSize:11,color:C.faint}}>24h · USD</div>
-                </div>
+          {loading?<div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:56,gap:10,color:C.muted,fontSize:13}}><span style={{display:"inline-block",width:20,height:20,border:`2.5px solid ${C.border}`,borderTopColor:C.accent,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>Loading…</div>
+          :<>
+            <div style={{display:"flex",alignItems:"flex-end",gap:12,marginBottom:16}}>
+              <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:34,fontWeight:800,color:C.text,letterSpacing:"-0.03em"}}>${fmtPrice(quote?.c)}</span>
+              <div style={{paddingBottom:4}}>
+                <span style={{fontSize:14,fontWeight:700,color:up?C.green:C.red}}>{up?"↑":"↓"} ${fmtPrice(Math.abs(quote?.d||0))} ({fmtPct(quote?.dp)})</span>
+                <div style={{fontSize:11,color:C.faint}}>24h · USD</div>
               </div>
-              <PriceChart q={q}/>
-              <div style={{marginTop:16}}>
-                <div style={{fontSize:11,fontWeight:700,color:C.faint,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>{crypto?"Market Data":"Fundamentals"}</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
-                  <Stat label="Market Cap" value={fmtLarge(details?.marketCap)}/>
-                  {crypto?<>
-                    <Stat label="24h Volume" value={fmtLarge(details?.volume24h)}/>
-                    <Stat label="Rank" value={details?.rank?"#"+details.rank:"—"}/>
-                    <Stat label="24h High" value={quote?.h?"$"+fmtPrice(quote.h):"—"}/>
-                    <Stat label="24h Low" value={quote?.l?"$"+fmtPrice(quote.l):"—"}/>
-                    <Stat label="All-Time High" value={details?.ath?"$"+fmtPrice(details.ath):"—"} sub={details?.athDate}/>
-                    <Stat label="All-Time Low" value={details?.atl?"$"+fmtPrice(details.atl):"—"}/>
-                    <Stat label="Circulating" value={details?.circulatingSupply?Number(details.circulatingSupply.toFixed(0)).toLocaleString()+" "+(q.symbol||""):"—"}/>
-                    <Stat label="Total Supply" value={details?.totalSupply?Number(details.totalSupply.toFixed(0)).toLocaleString()+" "+(q.symbol||""):"Unlimited"}/>
-                  </>:<>
-                    <Stat label="P/E Ratio" value={details?.pe?details.pe.toFixed(1):"—"}/>
-                    <Stat label="EPS" value={details?.eps?"$"+details.eps.toFixed(2):"—"}/>
-                    <Stat label="52W High" value={details?.high52w?"$"+fmtPrice(details.high52w):"—"}/>
-                    <Stat label="52W Low" value={details?.low52w?"$"+fmtPrice(details.low52w):"—"}/>
-                    <Stat label="Beta" value={details?.beta?details.beta.toFixed(2):"—"}/>
-                    <Stat label="24h High" value={quote?.h?"$"+fmtPrice(quote.h):"—"}/>
-                    <Stat label="24h Low" value={quote?.l?"$"+fmtPrice(quote.l):"—"}/>
-                    <Stat label="Prev Close" value={quote?.pc?"$"+fmtPrice(quote.pc):"—"}/>
-                  </>}
-                </div>
+            </div>
+            <PriceChart q={q}/>
+            <div style={{marginTop:16}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.faint,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>{crypto?"Market Data":"Fundamentals"}</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+                <Stat label="Market Cap" value={fmtLarge(details?.marketCap)}/>
+                {crypto?<><Stat label="24h Volume" value={fmtLarge(details?.volume24h)}/><Stat label="Rank" value={details?.rank?"#"+details.rank:"—"}/><Stat label="24h High" value={quote?.h?"$"+fmtPrice(quote.h):"—"}/><Stat label="24h Low" value={quote?.l?"$"+fmtPrice(quote.l):"—"}/><Stat label="All-Time High" value={details?.ath?"$"+fmtPrice(details.ath):"—"} sub={details?.athDate}/><Stat label="All-Time Low" value={details?.atl?"$"+fmtPrice(details.atl):"—"}/><Stat label="Circulating" value={details?.circulatingSupply?Number(details.circulatingSupply.toFixed(0)).toLocaleString()+" "+(q.symbol||""):"—"}/><Stat label="Total Supply" value={details?.totalSupply?Number(details.totalSupply.toFixed(0)).toLocaleString()+" "+(q.symbol||""):"Unlimited"}/></>
+                :<><Stat label="P/E Ratio" value={details?.pe?details.pe.toFixed(1):"—"}/><Stat label="EPS" value={details?.eps?"$"+details.eps.toFixed(2):"—"}/><Stat label="52W High" value={details?.high52w?"$"+fmtPrice(details.high52w):"—"}/><Stat label="52W Low" value={details?.low52w?"$"+fmtPrice(details.low52w):"—"}/><Stat label="Beta" value={details?.beta?details.beta.toFixed(2):"—"}/><Stat label="24h High" value={quote?.h?"$"+fmtPrice(quote.h):"—"}/><Stat label="24h Low" value={quote?.l?"$"+fmtPrice(quote.l):"—"}/><Stat label="Prev Close" value={quote?.pc?"$"+fmtPrice(quote.pc):"—"}/></>}
               </div>
-            </>
-          }
+            </div>
+          </>}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── CUSTOMISE MODAL ──────────────────────────────────────────────────────────
+function CustomiseModal({type,allQ,visible,onSave,onClose,C}){
+  const [selected,setSelected]=useState(new Set(visible));
+  const toggle=(id)=>{setSelected(prev=>{const next=new Set(prev);if(next.has(id))next.delete(id);else next.add(id);return next;});};
+  const items=Object.values(allQ).filter(q=>isCryptoQ(q)====(type==="crypto"));
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.55)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1001,padding:20,backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:C.surface,borderRadius:20,width:"100%",maxWidth:520,maxHeight:"80vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 64px rgba(0,0,0,0.22)"}}>
+        <div style={{padding:"16px 22px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div>
+            <div style={{fontSize:15,fontWeight:700,color:C.text}}>Customise {type==="crypto"?"Crypto":"Stocks"} on Overview</div>
+            <div style={{fontSize:12,color:C.faint,marginTop:2}}>Select which assets appear on the front page</div>
+          </div>
+          <button onClick={onClose} style={{width:30,height:30,borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",cursor:"pointer",color:C.muted,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        </div>
+        <div style={{overflowY:"auto",flex:1,padding:"12px 22px"}}>
+          {items.map(q=>{
+            const sym=q.symbol||q.ticker;
+            const checked=selected.has(q.id);
+            const up=(q.dp||0)>=0;
+            return(
+              <div key={q.id} onClick={()=>toggle(q.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 10px",borderRadius:10,marginBottom:4,cursor:"pointer",background:checked?C.accentBg:"transparent",border:`1px solid ${checked?C.accent:C.border}`,transition:"all 0.15s"}}>
+                <AssetLogo q={q} size={30}/>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:600,color:C.text}}>{q.name}</div>
+                  <div style={{fontSize:11,color:C.faint}}>{sym}</div>
+                </div>
+                <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:C.text}}>{isCryptoQ(q)?"$":""}{fmtPrice(q.c)}</span>
+                <span style={{fontSize:11,fontWeight:700,color:up?C.green:C.red,minWidth:54,textAlign:"right"}}>{fmtPct(q.dp)}</span>
+                <div style={{width:20,height:20,borderRadius:6,border:`2px solid ${checked?C.accent:C.border}`,background:checked?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  {checked&&<svg width="10" height="10" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{padding:"14px 22px",borderTop:`1px solid ${C.border}`,display:"flex",gap:10,justifyContent:"flex-end"}}>
+          <button onClick={onClose} style={{padding:"8px 16px",borderRadius:9,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,fontWeight:600,cursor:"pointer"}}>Cancel</button>
+          <button onClick={()=>onSave([...selected])} style={{padding:"8px 20px",borderRadius:9,border:"none",background:"linear-gradient(135deg,#2563eb,#7c3aed)",color:"white",fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 2px 8px rgba(37,99,235,0.3)"}}>Save changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SCROLLABLE ASSET STRIP ───────────────────────────────────────────────────
+function AssetStrip({items,onSelect,onPin,pinned,onCustomise,label,accent,C}){
+  const ref=useRef(null);
+  const scroll=(dir)=>{if(ref.current)ref.current.scrollBy({left:dir*220,behavior:"smooth"});};
+  return(
+    <div style={{...{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:16}}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+        <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:C.faint,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>{label}</div>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <button onClick={onCustomise} style={{padding:"4px 10px",borderRadius:7,border:`1px solid ${C.border}`,background:"transparent",fontSize:11,fontWeight:600,color:C.muted,cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif",display:"flex",alignItems:"center",gap:4}}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Customise
+          </button>
+          <button onClick={()=>scroll(-1)} style={{width:26,height:26,borderRadius:7,border:`1px solid ${C.border}`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:C.muted}}>‹</button>
+          <button onClick={()=>scroll(1)} style={{width:26,height:26,borderRadius:7,border:`1px solid ${C.border}`,background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:C.muted}}>›</button>
+        </div>
+      </div>
+      <div ref={ref} style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4,scrollbarWidth:"none",msOverflowStyle:"none"}}
+        className="hide-scroll">
+        {items.length===0&&<div style={{fontSize:13,color:C.faint,padding:"20px 0"}}>No assets selected — click Customise to add some.</div>}
+        {items.map(q=>{
+          const up=(q.dp||0)>=0;
+          const sym=q.symbol||q.ticker;
+          return(
+            <div key={q.id} onClick={()=>onSelect(q)}
+              style={{flexShrink:0,width:180,background:C.bg,border:`1px solid ${C.border}`,borderRadius:12,padding:14,cursor:"pointer",position:"relative",transition:"all 0.15s"}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor="#bfdbfe";e.currentTarget.style.boxShadow="0 4px 16px rgba(37,99,235,0.08)";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow="none";}}>
+              <div style={{position:"absolute",top:10,right:10}} onClick={e=>e.stopPropagation()}>
+                <PinBtn id={q.id} pinned={pinned} onToggle={onPin}/>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <AssetLogo q={q} size={28}/>
+                <div style={{minWidth:0}}>
+                  <div style={{fontSize:11,fontWeight:700,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sym}</div>
+                  <div style={{fontSize:10,color:C.faint,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{q.name}</div>
+                </div>
+              </div>
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:16,fontWeight:700,color:C.text,marginBottom:4}}>{isCryptoQ(q)?"$":""}{fmtPrice(q.c)}</div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <span style={{fontSize:11,fontWeight:700,padding:"2px 6px",borderRadius:5,background:up?C.greenBg:C.redBg,color:up?C.green:C.red}}>{fmtPct(q.dp)}</span>
+              </div>
+              <div style={{marginTop:8}}><Spark up={up} w={148} h={30}/></div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── GAINER / LOSER CARDS ─────────────────────────────────────────────────────
+function GainerLoserSection({cryptoQ,onSelect,C}){
+  const top100=Object.values(cryptoQ).filter(q=>q.rank&&q.rank<=100&&q.dp!=null);
+  if(top100.length<2)return null;
+  const sorted=[...top100].sort((a,b)=>(b.dp||0)-(a.dp||0));
+  const gainer=sorted[0];
+  const loser=sorted[sorted.length-1];
+  const Card=({q,label,col,bg})=>{
+    const up=(q.dp||0)>=0;
+    return(
+      <div onClick={()=>onSelect(q)} style={{flex:1,background:bg,border:`1px solid ${col}30`,borderRadius:12,padding:14,cursor:"pointer",transition:"all 0.15s"}}
+        onMouseEnter={e=>{e.currentTarget.style.boxShadow=`0 4px 16px ${col}20`;}}
+        onMouseLeave={e=>{e.currentTarget.style.boxShadow="none";}}>
+        <div style={{fontSize:10,fontWeight:700,color:col,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>{label}</div>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+          <CryptoLogo imageUrl={q.image} symbol={q.symbol} size={36}/>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,color:C.text}}>{q.name}</div>
+            <div style={{fontSize:11,color:C.faint}}>{q.symbol} · #{q.rank}</div>
+          </div>
+        </div>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:20,fontWeight:800,color:C.text,marginBottom:4}}>${fmtPrice(q.c)}</div>
+        <div style={{fontSize:16,fontWeight:800,color:col}}>{up?"↑":"↓"} {Math.abs(q.dp).toFixed(2)}%</div>
+        <div style={{marginTop:8}}><Spark up={up} w={"100%"} h={32}/></div>
+      </div>
+    );
+  };
+  return(
+    <div style={{display:"flex",gap:12}}>
+      <Card q={gainer} label="📈 Top Gainer (24h)" col="#0ea569" bg="#f0fdf4"/>
+      <Card q={loser}  label="📉 Top Loser (24h)"  col="#e53e3e" bg="#fff5f5"/>
     </div>
   );
 }
@@ -339,7 +415,7 @@ function TickerTape({allQ,onSelect}){
   const items=Object.values(allQ).filter(q=>q.c).slice(0,30);
   return(
     <div style={{background:"#f0f4ff",borderBottom:"1px solid #e2e8f0",overflow:"hidden",height:32,display:"flex",alignItems:"center"}}>
-      <style>{`@keyframes scrolltape{0%{transform:translateX(0)}100%{transform:translateX(-50%)}} .tapew{display:flex;animation:scrolltape 80s linear infinite;white-space:nowrap;}`}</style>
+      <style>{`.hide-scroll::-webkit-scrollbar{display:none} @keyframes scrolltape{0%{transform:translateX(0)}100%{transform:translateX(-50%)}} .tapew{display:flex;animation:scrolltape 80s linear infinite;white-space:nowrap;}`}</style>
       {items.length===0?<span style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:11,color:"#94a3b8",paddingLeft:16}}>Loading…</span>
       :<div className="tapew">{[...items,...items].map((q,i)=>(
         <span key={i} onClick={()=>onSelect(q)} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"0 14px",fontSize:11,fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:500,cursor:"pointer"}}>
@@ -357,78 +433,53 @@ function TickerTape({allQ,onSelect}){
 function WatchlistStrip({pinned,allQ,onSelect,onUnpin,C}){
   const items=[...pinned].map(id=>allQ[id]).filter(Boolean);
   return(
-    <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"8px 22px",display:"flex",alignItems:"center",gap:8,overflowX:"auto",minHeight:44}}>
+    <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"8px 22px",display:"flex",alignItems:"center",gap:8,overflowX:"auto",minHeight:44}} className="hide-scroll">
       <span style={{fontSize:10,fontWeight:700,color:C.faint,letterSpacing:"0.1em",textTransform:"uppercase",flexShrink:0}}>Watchlist</span>
-      {items.length===0
-        ?<span style={{fontSize:12,color:C.faint}}>— click ★ on any asset or inside the modal to pin it here</span>
-        :items.map(q=>{
-          const up=(q.dp||0)>=0;
-          const sym=q.symbol||q.ticker;
-          return(
-            <div key={q.id} onClick={()=>onSelect(q)}
-              style={{display:"inline-flex",alignItems:"center",gap:7,padding:"5px 10px",borderRadius:10,background:C.bg,border:`1px solid ${C.border}`,cursor:"pointer",flexShrink:0,transition:"all 0.15s",position:"relative"}}
-              onMouseEnter={e=>e.currentTarget.style.borderColor="#bfdbfe"}
-              onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
-              <AssetLogo q={q} size={22}/>
-              <div>
-                <div style={{fontSize:11,fontWeight:700,color:C.text,fontFamily:"'JetBrains Mono',monospace"}}>${fmtPrice(q.c)}</div>
-                <div style={{fontSize:10,color:up?C.green:C.red,fontWeight:600}}>{fmtPct(q.dp)}</div>
-              </div>
-              <span style={{fontSize:10,fontWeight:700,color:C.muted}}>{sym?.slice(0,6)}</span>
-              <button onClick={e=>{e.stopPropagation();onUnpin(q.id);}}
-                style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:"#e2e8f0",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:C.muted,fontWeight:700}}>✕</button>
-            </div>
-          );
-        })
-      }
+      {items.length===0?<span style={{fontSize:12,color:C.faint}}>— click ★ on any asset or inside the modal to pin it here</span>
+      :items.map(q=>{const up=(q.dp||0)>=0;const sym=q.symbol||q.ticker;return(
+        <div key={q.id} onClick={()=>onSelect(q)}
+          style={{display:"inline-flex",alignItems:"center",gap:7,padding:"5px 10px",borderRadius:10,background:C.bg,border:`1px solid ${C.border}`,cursor:"pointer",flexShrink:0,transition:"all 0.15s",position:"relative"}}
+          onMouseEnter={e=>e.currentTarget.style.borderColor="#bfdbfe"} onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+          <AssetLogo q={q} size={22}/>
+          <div><div style={{fontSize:11,fontWeight:700,color:C.text,fontFamily:"'JetBrains Mono',monospace"}}>${fmtPrice(q.c)}</div><div style={{fontSize:10,color:up?C.green:C.red,fontWeight:600}}>{fmtPct(q.dp)}</div></div>
+          <span style={{fontSize:10,fontWeight:700,color:C.muted}}>{sym?.slice(0,6)}</span>
+          <button onClick={e=>{e.stopPropagation();onUnpin(q.id);}} style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:"#e2e8f0",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:C.muted,fontWeight:700}}>✕</button>
+        </div>
+      );})}
     </div>
   );
 }
 
 // ─── DEMO DATA ────────────────────────────────────────────────────────────────
 const mkStock=(ticker,name,c,dp,type="stock")=>({id:ticker,ticker,name,c,dp,type});
-const DEMO_SQ={
-  SPY:mkStock("SPY","S&P 500 ETF",524.38,0.24,"etf"),
-  QQQ:mkStock("QQQ","Nasdaq 100",447.92,0.64,"etf"),
-  NVDA:mkStock("NVDA","Nvidia",887.24,2.47),
-  AAPL:mkStock("AAPL","Apple",189.30,-0.63),
-  TSLA:mkStock("TSLA","Tesla",174.48,2.84),
-  META:mkStock("META","Meta",512.63,1.45),
-  MSFT:mkStock("MSFT","Microsoft",415.60,0.82),
-  AMZN:mkStock("AMZN","Amazon",182.40,1.10),
-  GOOGL:mkStock("GOOGL","Alphabet",162.30,0.55),
-};
-const DEMO_NEWS=[
-  {id:1,source:"Reuters",headline:"Fed officials signal caution on rate cuts as inflation stays sticky",datetime:Math.floor(Date.now()/1000)-1800,url:"#"},
-  {id:2,source:"Bloomberg",headline:"Nvidia surges as data centre demand exceeds Wall Street estimates",datetime:Math.floor(Date.now()/1000)-3600,url:"#"},
-  {id:3,source:"WSJ",headline:"Treasury yields climb as investors reassess Fed cut timeline",datetime:Math.floor(Date.now()/1000)-5400,url:"#"},
-  {id:4,source:"FT",headline:"Private equity dry powder hits $2.6 trillion record high",datetime:Math.floor(Date.now()/1000)-7200,url:"#"},
-  {id:5,source:"Bloomberg",headline:"Goldman raises S&P 500 year-end target to 5,600",datetime:Math.floor(Date.now()/1000)-9000,url:"#"},
-  {id:6,source:"Reuters",headline:"Oil falls on demand concerns despite Middle East tensions",datetime:Math.floor(Date.now()/1000)-10800,url:"#"},
-  {id:7,source:"CoinDesk",headline:"Bitcoin ETF inflows reach $500M in a single day for first time",datetime:Math.floor(Date.now()/1000)-14400,url:"#"},
+const DEMO_SQ={SPY:mkStock("SPY","S&P 500 ETF",524.38,0.24,"etf"),QQQ:mkStock("QQQ","Nasdaq 100",447.92,0.64,"etf"),NVDA:mkStock("NVDA","Nvidia",887.24,2.47),AAPL:mkStock("AAPL","Apple",189.30,-0.63),TSLA:mkStock("TSLA","Tesla",174.48,2.84),META:mkStock("META","Meta",512.63,1.45),MSFT:mkStock("MSFT","Microsoft",415.60,0.82),AMZN:mkStock("AMZN","Amazon",182.40,1.10),GOOGL:mkStock("GOOGL","Alphabet",162.30,0.55)};
+const DEMO_CQ_LIST=[
+  {id:"bitcoin",cgId:"bitcoin",symbol:"BTC",name:"Bitcoin",image:"https://assets.coingecko.com/coins/images/1/small/bitcoin.png",c:68420,dp:1.85,type:"crypto",rank:1},
+  {id:"ethereum",cgId:"ethereum",symbol:"ETH",name:"Ethereum",image:"https://assets.coingecko.com/coins/images/279/small/ethereum.png",c:3280,dp:1.12,type:"crypto",rank:2},
+  {id:"solana",cgId:"solana",symbol:"SOL",name:"Solana",image:"https://assets.coingecko.com/coins/images/4128/small/solana.png",c:142.50,dp:3.21,type:"crypto",rank:5},
+  {id:"binancecoin",cgId:"binancecoin",symbol:"BNB",name:"BNB",image:"https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png",c:412.80,dp:0.94,type:"crypto",rank:4},
+  {id:"ripple",cgId:"ripple",symbol:"XRP",name:"XRP",image:"https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png",c:0.5821,dp:-0.43,type:"crypto",rank:6},
+  {id:"cardano",cgId:"cardano",symbol:"ADA",name:"Cardano",image:"https://assets.coingecko.com/coins/images/975/small/cardano.png",c:0.4432,dp:1.23,type:"crypto",rank:9},
+  {id:"dogecoin",cgId:"dogecoin",symbol:"DOGE",name:"Dogecoin",image:"https://assets.coingecko.com/coins/images/5/small/dogecoin.png",c:0.1621,dp:2.10,type:"crypto",rank:8},
+  {id:"avalanche-2",cgId:"avalanche-2",symbol:"AVAX",name:"Avalanche",image:"https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png",c:34.82,dp:-1.20,type:"crypto",rank:12},
+  {id:"polkadot",cgId:"polkadot",symbol:"DOT",name:"Polkadot",image:"https://assets.coingecko.com/coins/images/12171/small/polkadot.png",c:7.82,dp:0.54,type:"crypto",rank:14},
+  {id:"chainlink",cgId:"chainlink",symbol:"LINK",name:"Chainlink",image:"https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png",c:14.21,dp:8.83,type:"crypto",rank:15},
+  {id:"near",cgId:"near",symbol:"NEAR",name:"NEAR Protocol",image:"https://assets.coingecko.com/coins/images/10365/small/near.jpg",c:5.43,dp:-4.14,type:"crypto",rank:18},
+  {id:"uniswap",cgId:"uniswap",symbol:"UNI",name:"Uniswap",image:"https://assets.coingecko.com/coins/images/12504/small/uniswap-uni.png",c:8.92,dp:-0.87,type:"crypto",rank:20},
+  {id:"sui",cgId:"sui",symbol:"SUI",name:"Sui",image:"https://assets.coingecko.com/coins/images/26375/small/sui-ocean-square.png",c:1.82,dp:12.41,type:"crypto",rank:22},
+  {id:"injective-protocol",cgId:"injective-protocol",symbol:"INJ",name:"Injective",image:"https://assets.coingecko.com/coins/images/12882/small/Secondary_Symbol.png",c:24.50,dp:-6.22,type:"crypto",rank:28},
 ];
-const DEMO_CONGRESS=[
-  {name:"Nancy Pelosi",party:"D",state:"CA",symbol:"NVDA",transactionType:"Buy",amount:"$1M–$5M",transactionDate:"2025-04-07"},
-  {name:"Dan Crenshaw",party:"R",state:"TX",symbol:"LMT",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-05"},
-  {name:"Josh Gottheimer",party:"D",state:"NJ",symbol:"MSFT",transactionType:"Sale",amount:"$500K–$1M",transactionDate:"2025-04-04"},
-  {name:"Tommy Tuberville",party:"R",state:"AL",symbol:"XOM",transactionType:"Buy",amount:"$100K–$250K",transactionDate:"2025-04-03"},
-  {name:"Ro Khanna",party:"D",state:"CA",symbol:"AMZN",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-02"},
-];
-const DEMO_TWEETS=[
-  {handle:"RaoulGMI",name:"Raoul Pal",text:"The Everything Code keeps playing out. Liquidity drives all assets. Watch the Fed balance sheet, not the rate.",likes:"12.8K",time:"2h"},
-  {handle:"elerianm",name:"Mohamed El-Erian",text:"Today's CPI print will be closely watched. Any upside surprise risks a sharp repricing in rate expectations.",likes:"7.1K",time:"3h"},
-  {handle:"LukeGromen",name:"Luke Gromen",text:"The bond market is telling you something equities haven't priced yet. Fiscal dominance is here.",likes:"5.9K",time:"4h"},
-  {handle:"naval",name:"Naval Ravikant",text:"Inflation is a hidden tax on savers. The monetary system redistributes from the cautious to the leveraged.",likes:"31.4K",time:"1h"},
-  {handle:"APompliano",name:"Anthony Pompliano",text:"Bitcoin is up on the day while the dollar weakens. This is the trade of the decade.",likes:"9.3K",time:"2h"},
-  {handle:"zerohedge",name:"ZeroHedge",text:"JPMorgan cuts GDP forecast — stagflation risks rising, strategists warn.",likes:"6.4K",time:"3h"},
-];
+const DEMO_CQ=Object.fromEntries(DEMO_CQ_LIST.map(c=>[c.id,c]));
+const DEMO_NEWS=[{id:1,source:"Reuters",headline:"Fed officials signal caution on rate cuts as inflation stays sticky",datetime:Math.floor(Date.now()/1000)-1800,url:"#"},{id:2,source:"Bloomberg",headline:"Nvidia surges as data centre demand exceeds Wall Street estimates",datetime:Math.floor(Date.now()/1000)-3600,url:"#"},{id:3,source:"WSJ",headline:"Treasury yields climb as investors reassess Fed cut timeline",datetime:Math.floor(Date.now()/1000)-5400,url:"#"},{id:4,source:"FT",headline:"Private equity dry powder hits $2.6 trillion record high",datetime:Math.floor(Date.now()/1000)-7200,url:"#"},{id:5,source:"Bloomberg",headline:"Goldman raises S&P 500 year-end target to 5,600",datetime:Math.floor(Date.now()/1000)-9000,url:"#"},{id:6,source:"Reuters",headline:"Oil falls on demand concerns despite Middle East tensions",datetime:Math.floor(Date.now()/1000)-10800,url:"#"},{id:7,source:"CoinDesk",headline:"Bitcoin ETF inflows reach $500M in a single day for first time",datetime:Math.floor(Date.now()/1000)-14400,url:"#"}];
+const DEMO_CONGRESS=[{name:"Nancy Pelosi",party:"D",state:"CA",symbol:"NVDA",transactionType:"Buy",amount:"$1M–$5M",transactionDate:"2025-04-07"},{name:"Dan Crenshaw",party:"R",state:"TX",symbol:"LMT",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-05"},{name:"Josh Gottheimer",party:"D",state:"NJ",symbol:"MSFT",transactionType:"Sale",amount:"$500K–$1M",transactionDate:"2025-04-04"},{name:"Tommy Tuberville",party:"R",state:"AL",symbol:"XOM",transactionType:"Buy",amount:"$100K–$250K",transactionDate:"2025-04-03"},{name:"Ro Khanna",party:"D",state:"CA",symbol:"AMZN",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-02"}];
+const DEMO_TWEETS=[{handle:"RaoulGMI",name:"Raoul Pal",text:"The Everything Code keeps playing out. Liquidity drives all assets. Watch the Fed balance sheet, not the rate.",likes:"12.8K",time:"2h"},{handle:"elerianm",name:"Mohamed El-Erian",text:"Today's CPI print will be closely watched. Any upside surprise risks a sharp repricing in rate expectations.",likes:"7.1K",time:"3h"},{handle:"LukeGromen",name:"Luke Gromen",text:"The bond market is telling you something equities haven't priced yet. Fiscal dominance is here.",likes:"5.9K",time:"4h"},{handle:"naval",name:"Naval Ravikant",text:"Inflation is a hidden tax on savers. The monetary system redistributes from the cautious to the leveraged.",likes:"31.4K",time:"1h"},{handle:"APompliano",name:"Anthony Pompliano",text:"Bitcoin is up on the day while the dollar weakens. This is the trade of the decade.",likes:"9.3K",time:"2h"},{handle:"zerohedge",name:"ZeroHedge",text:"JPMorgan cuts GDP forecast — stagflation risks rising, strategists warn.",likes:"6.4K",time:"3h"}];
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App(){
   const [tab,setTab]=useState("overview");
   const [clock,setClock]=useState(new Date());
   const [stockQ,setStockQ]=useState({});
-  const [cryptoQ,setCryptoQ]=useState({}); // keyed by cgId, includes top 250
+  const [cryptoQ,setCryptoQ]=useState({});
   const [searchedQ,setSearchedQ]=useState({});
   const [news,setNews]=useState([]);
   const [congress,setCongress]=useState([]);
@@ -436,77 +487,52 @@ export default function App(){
   const [brief,setBrief]=useState("");
   const [briefing,setBriefing]=useState(false);
   const [briefDone,setBriefDone]=useState(false);
-  const [modal,setModal]=useState(null); // q object
+  const [modal,setModal]=useState(null);
   const [search,setSearch]=useState("");
   const [searching,setSearching]=useState(false);
   const [cryptoSearch,setCryptoSearch]=useState("");
+  const [customiseType,setCustomiseType]=useState(null); // "stock"|"crypto"|null
   const [pinned,setPinned]=useState(()=>{try{return new Set(JSON.parse(localStorage.getItem("am_pinned")||"[]"));}catch{return new Set();}});
+  // Visible IDs on overview — stored in localStorage
+  const [visibleStocks,setVisibleStocks]=useState(()=>{try{const s=localStorage.getItem("am_vis_stocks");return s?JSON.parse(s):Object.keys(DEMO_SQ);}catch{return Object.keys(DEMO_SQ);}});
+  const [visibleCrypto,setVisibleCrypto]=useState(()=>{try{const s=localStorage.getItem("am_vis_crypto");return s?JSON.parse(s):["bitcoin","ethereum","solana","binancecoin","ripple","cardano","dogecoin","avalanche-2"];}catch{return ["bitcoin","ethereum","solana","binancecoin","ripple","cardano","dogecoin","avalanche-2"];}});
   const searchRef=useRef(null);
   const isDemo=!FINNHUB_KEY;
-
-  // allQ is the master map — id → q object
-  const allQ = {...stockQ,...cryptoQ,...searchedQ};
+  const allQ={...stockQ,...cryptoQ,...searchedQ};
 
   useEffect(()=>{try{localStorage.setItem("am_pinned",JSON.stringify([...pinned]));}catch{};},[pinned]);
+  useEffect(()=>{try{localStorage.setItem("am_vis_stocks",JSON.stringify(visibleStocks));}catch{};},[visibleStocks]);
+  useEffect(()=>{try{localStorage.setItem("am_vis_crypto",JSON.stringify(visibleCrypto));}catch{};},[visibleCrypto]);
+
   const togglePin=useCallback((id)=>{setPinned(prev=>{const next=new Set(prev);if(next.has(id))next.delete(id);else next.add(id);return next;});},[]);
 
   useEffect(()=>{const t=setInterval(()=>setClock(new Date()),1000);return()=>clearInterval(t);},[]);
 
-  // ── Fetch top 250 crypto from CoinGecko (includes logos + symbol + cgId) ──
-  const fetchCrypto=useCallback(async()=>{
-    if(isDemo){
-      // Demo: generate 20 fake crypto entries so UI has content
-      const demo={};
-      const coins=[
-        {id:"bitcoin",symbol:"BTC",name:"Bitcoin",image:"https://assets.coingecko.com/coins/images/1/small/bitcoin.png",current_price:68420,price_change_percentage_24h:1.85,market_cap_rank:1},
-        {id:"ethereum",symbol:"ETH",name:"Ethereum",image:"https://assets.coingecko.com/coins/images/279/small/ethereum.png",current_price:3280,price_change_percentage_24h:1.12,market_cap_rank:2},
-        {id:"solana",symbol:"SOL",name:"Solana",image:"https://assets.coingecko.com/coins/images/4128/small/solana.png",current_price:142.50,price_change_percentage_24h:3.21,market_cap_rank:5},
-        {id:"binancecoin",symbol:"BNB",name:"BNB",image:"https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png",current_price:412.80,price_change_percentage_24h:0.94,market_cap_rank:4},
-        {id:"ripple",symbol:"XRP",name:"XRP",image:"https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png",current_price:0.5821,price_change_percentage_24h:-0.43,market_cap_rank:6},
-        {id:"cardano",symbol:"ADA",name:"Cardano",image:"https://assets.coingecko.com/coins/images/975/small/cardano.png",current_price:0.4432,price_change_percentage_24h:1.23,market_cap_rank:9},
-        {id:"dogecoin",symbol:"DOGE",name:"Dogecoin",image:"https://assets.coingecko.com/coins/images/5/small/dogecoin.png",current_price:0.1621,price_change_percentage_24h:2.10,market_cap_rank:8},
-        {id:"avalanche-2",symbol:"AVAX",name:"Avalanche",image:"https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png",current_price:34.82,price_change_percentage_24h:-1.20,market_cap_rank:12},
-        {id:"polkadot",symbol:"DOT",name:"Polkadot",image:"https://assets.coingecko.com/coins/images/12171/small/polkadot.png",current_price:7.82,price_change_percentage_24h:0.54,market_cap_rank:14},
-        {id:"chainlink",symbol:"LINK",name:"Chainlink",image:"https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png",current_price:14.21,price_change_percentage_24h:1.83,market_cap_rank:15},
-        {id:"tron",symbol:"TRX",name:"TRON",image:"https://assets.coingecko.com/coins/images/1094/small/tron-logo.png",current_price:0.1231,price_change_percentage_24h:0.32,market_cap_rank:10},
-        {id:"near",symbol:"NEAR",name:"NEAR Protocol",image:"https://assets.coingecko.com/coins/images/10365/small/near.jpg",current_price:5.43,price_change_percentage_24h:2.14,market_cap_rank:18},
-        {id:"uniswap",symbol:"UNI",name:"Uniswap",image:"https://assets.coingecko.com/coins/images/12504/small/uniswap-uni.png",current_price:8.92,price_change_percentage_24h:-0.87,market_cap_rank:20},
-        {id:"litecoin",symbol:"LTC",name:"Litecoin",image:"https://assets.coingecko.com/coins/images/2/small/litecoin.png",current_price:84.20,price_change_percentage_24h:0.43,market_cap_rank:21},
-        {id:"stellar",symbol:"XLM",name:"Stellar",image:"https://assets.coingecko.com/coins/images/100/small/Stellar_symbol_black_RGB.png",current_price:0.1082,price_change_percentage_24h:0.71,market_cap_rank:25},
-        {id:"injective-protocol",symbol:"INJ",name:"Injective",image:"https://assets.coingecko.com/coins/images/12882/small/Secondary_Symbol.png",current_price:24.50,price_change_percentage_24h:3.42,market_cap_rank:28},
-        {id:"sui",symbol:"SUI",name:"Sui",image:"https://assets.coingecko.com/coins/images/26375/small/sui-ocean-square.png",current_price:1.82,price_change_percentage_24h:4.21,market_cap_rank:22},
-        {id:"aptos",symbol:"APT",name:"Aptos",image:"https://assets.coingecko.com/coins/images/26455/small/aptos_round.png",current_price:8.14,price_change_percentage_24h:-0.62,market_cap_rank:30},
-        {id:"optimism",symbol:"OP",name:"Optimism",image:"https://assets.coingecko.com/coins/images/25244/small/Optimism.png",current_price:1.92,price_change_percentage_24h:1.14,market_cap_rank:35},
-        {id:"arbitrum",symbol:"ARB",name:"Arbitrum",image:"https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg",current_price:0.8821,price_change_percentage_24h:-1.05,market_cap_rank:38},
-      ];
-      coins.forEach(coin=>{
-        demo[coin.id]={id:coin.id,cgId:coin.id,symbol:coin.symbol.toUpperCase(),name:coin.name,image:coin.image,c:coin.current_price,dp:coin.price_change_percentage_24h||0,type:"crypto",rank:coin.market_cap_rank};
-      });
-      setCryptoQ(demo);return;
+  // ── Auto-generate briefing on load once data arrives ──
+  const briefGenerated=useRef(false);
+  useEffect(()=>{
+    if(briefGenerated.current)return;
+    if(Object.keys(stockQ).length>0&&Object.keys(cryptoQ).length>0&&news.length>0){
+      briefGenerated.current=true;
+      generateBriefing(stockQ,cryptoQ,news,poly,congress);
     }
+  },[stockQ,cryptoQ,news,poly,congress]); // eslint-disable-line
+
+  const handleSearch=async(e)=>{
+    if(e.key!=="Enter"||!search.trim())return;
+    const raw=search.trim().toUpperCase();
+    setSearching(true);
+    const cryptoMatch=Object.values(cryptoQ).find(q=>q.symbol===raw);
+    if(cryptoMatch){setModal(cryptoMatch);setSearch("");setSearching(false);return;}
+    if(!FINNHUB_KEY){const q={id:raw,ticker:raw,name:raw,c:150,dp:0.5,type:"stock"};setSearchedQ(prev=>({...prev,[raw]:q}));setModal(q);setSearch("");setSearching(false);return;}
     try{
-      // Fetch top 250 by market cap — includes image, symbol, price, 24h change
-      const res=await fetch(`${COINGECKO}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`);
-      const coins=await res.json();
-      if(!Array.isArray(coins))return;
-      const m={};
-      coins.forEach(coin=>{
-        m[coin.id]={
-          id:coin.id,
-          cgId:coin.id,
-          symbol:(coin.symbol||"").toUpperCase(),
-          name:coin.name,
-          image:coin.image, // CoinGecko provides this directly
-          c:coin.current_price,
-          dp:coin.price_change_percentage_24h||0,
-          type:"crypto",
-          rank:coin.market_cap_rank,
-          marketCap:coin.market_cap,
-        };
-      });
-      setCryptoQ(m);
-    }catch(e){console.error("Crypto fetch error:",e);}
-  },[isDemo]);
+      const r=await fetch(`${FINNHUB}/quote?symbol=${raw}&token=${FINNHUB_KEY}`);
+      const d=await r.json();
+      if(d.c&&d.c>0){const q={id:raw,ticker:raw,name:raw,c:d.c,dp:d.dp||0,type:"stock"};setSearchedQ(prev=>({...prev,[raw]:q}));setModal(q);setSearch("");}
+      else alert(`"${raw}" not found. Try AAPL, NFLX, BTC, SOL…`);
+    }catch{const q={id:raw,ticker:raw,name:raw,c:0,dp:0,type:"stock"};setSearchedQ(prev=>({...prev,[raw]:q}));setModal(q);setSearch("");}
+    setSearching(false);
+  };
 
   const fetchStocks=useCallback(async()=>{
     if(isDemo){setStockQ(DEMO_SQ);return;}
@@ -518,6 +544,27 @@ export default function App(){
       }));
       const m={};res.forEach(r=>{m[r.id]=r;});setStockQ(m);
     }catch{setStockQ(DEMO_SQ);}
+  },[isDemo]);
+
+  const fetchCrypto=useCallback(async()=>{
+    if(isDemo){setCryptoQ(DEMO_CQ);return;}
+    try{
+      const res=await fetch(`${COINGECKO}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`);
+      const coins=await res.json();
+      if(!Array.isArray(coins))return;
+      const m={};
+      coins.forEach(coin=>{
+        m[coin.id]={id:coin.id,cgId:coin.id,symbol:(coin.symbol||"").toUpperCase(),name:coin.name,image:coin.image,c:coin.current_price,dp:coin.price_change_percentage_24h||0,type:"crypto",rank:coin.market_cap_rank,marketCap:coin.market_cap};
+      });
+      setCryptoQ(m);
+      // If user hasn't customised crypto yet, update visible to use loaded IDs
+      setVisibleCrypto(prev=>{
+        const loaded=Object.keys(m);
+        // keep only IDs that exist in loaded data
+        const valid=prev.filter(id=>loaded.includes(id));
+        return valid.length>0?valid:loaded.slice(0,8);
+      });
+    }catch(e){console.error("Crypto fetch error:",e);}
   },[isDemo]);
 
   const fetchNews=useCallback(async()=>{
@@ -552,42 +599,20 @@ export default function App(){
     return()=>iv.forEach(clearInterval);
   },[fetchStocks,fetchCrypto,fetchNews,fetchCongress,fetchPoly]);
 
-  // ── Search handler ──
-  const handleSearch=async(e)=>{
-    if(e.key!=="Enter"||!search.trim())return;
-    const raw=search.trim().toUpperCase();
-    setSearching(true);
-    // Check if it's a crypto symbol in our loaded list
-    const cryptoMatch=Object.values(cryptoQ).find(q=>q.symbol===raw);
-    if(cryptoMatch){setModal(cryptoMatch);setSearch("");setSearching(false);return;}
-    // Otherwise treat as stock
-    if(!FINNHUB_KEY){
-      const q={id:raw,ticker:raw,name:raw,c:150,dp:0.5,type:"stock"};
-      setSearchedQ(prev=>({...prev,[raw]:q}));setModal(q);setSearch("");setSearching(false);return;
-    }
-    try{
-      const r=await fetch(`${FINNHUB}/quote?symbol=${raw}&token=${FINNHUB_KEY}`);
-      const d=await r.json();
-      if(d.c&&d.c>0){
-        const q={id:raw,ticker:raw,name:raw,c:d.c,dp:d.dp||0,type:"stock"};
-        setSearchedQ(prev=>({...prev,[raw]:q}));setModal(q);setSearch("");
-      } else alert(`"${raw}" not found. Try AAPL, NFLX, BTC, SOL, LINK…`);
-    }catch{const q={id:raw,ticker:raw,name:raw,c:0,dp:0,type:"stock"};setSearchedQ(prev=>({...prev,[raw]:q}));setModal(q);setSearch("");}
-    setSearching(false);
-  };
-
-  async function generateBriefing(){
+  // ── AI Briefing — accepts data directly so it can be called on load ──
+  async function generateBriefing(sQ,cQ,nws,ply,cong){
     setBriefing(true);setBrief("");setBriefDone(false);
-    const topStocks=Object.values(stockQ).slice(0,4).map(q=>`${q.ticker} ${fmtPrice(q.c)} (${fmtPct(q.dp)})`).join(", ");
-    const topCrypto=Object.values(cryptoQ).slice(0,4).map(q=>`${q.symbol} ${fmtPrice(q.c)} (${fmtPct(q.dp)})`).join(", ");
-    const nStr=news.slice(0,5).map(n=>`• ${n.headline}`).join("\n");
-    const pStr=poly.slice(0,4).map(p=>`• "${p.question}" YES ${p.yes}%`).join("\n");
-    const cStr=congress.slice(0,3).map(t=>`• ${t.name} ${(t.transactionType||"").toUpperCase()} ${t.symbol}`).join("\n");
+    const sq=sQ||stockQ,cq=cQ||cryptoQ,nw=nws||news,pl=ply||poly,cg=cong||congress;
+    const topStocks=Object.values(sq).slice(0,4).map(q=>`${q.ticker} ${fmtPrice(q.c)} (${fmtPct(q.dp)})`).join(", ");
+    const topCrypto=Object.values(cq).slice(0,4).map(q=>`${q.symbol} ${fmtPrice(q.c)} (${fmtPct(q.dp)})`).join(", ");
+    const nStr=nw.slice(0,5).map(n=>`• ${n.headline}`).join("\n");
+    const pStr=pl.slice(0,4).map(p=>`• "${p.question}" YES ${p.yes}%`).join("\n");
+    const cStr=cg.slice(0,3).map(t=>`• ${t.name} ${(t.transactionType||"").toUpperCase()} ${t.symbol}`).join("\n");
     const prompt=`You are a senior market strategist. Write a 4-5 sentence intelligence briefing for sophisticated investors covering: the dominant market/crypto theme today, what congressional trades may signal, what prediction markets are pricing in, and one key risk. Be direct — no filler.\n\nStocks: ${topStocks}\nCrypto: ${topCrypto}\n\nNews:\n${nStr}\n\nPolymarket:\n${pStr}\n\nCongress:\n${cStr}`;
     try{
       const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
       const data=await res.json();setBrief(data.content?.map(b=>b.text||"").join("")||"Unable to generate.");
-    }catch{setBrief("AI briefing unavailable.");}
+    }catch{setBrief("AI briefing unavailable — check API connection.");}
     setBriefing(false);setBriefDone(true);
   }
 
@@ -602,10 +627,11 @@ export default function App(){
   const pinnedStocks=pinnedItems.filter(q=>!isCryptoQ(q));
   const pinnedCrypto=pinnedItems.filter(q=>isCryptoQ(q));
 
-  // ── Filtered crypto list for crypto tab ──
-  const cryptoList=Object.values(cryptoQ).filter(q=>
-    !cryptoSearch || q.name.toLowerCase().includes(cryptoSearch.toLowerCase()) || q.symbol.toLowerCase().includes(cryptoSearch.toLowerCase())
-  );
+  // Resolve visible items from IDs
+  const visibleStockItems=visibleStocks.map(id=>allQ[id]).filter(Boolean);
+  const visibleCryptoItems=visibleCrypto.map(id=>allQ[id]).filter(Boolean);
+
+  const cryptoList=Object.values(cryptoQ).filter(q=>!cryptoSearch||q.name.toLowerCase().includes(cryptoSearch.toLowerCase())||q.symbol.toLowerCase().includes(cryptoSearch.toLowerCase()));
 
   const StockRow=({q})=>(
     <div className="rh" style={{display:"flex",alignItems:"center",gap:9,padding:"8px",borderRadius:8,marginBottom:2}} onClick={()=>setModal(q)}>
@@ -617,24 +643,18 @@ export default function App(){
     </div>
   );
 
-  const CryptoRow=({q})=>{
-    const up=(q.dp||0)>=0;
-    return(
-      <div className="rh" style={{display:"flex",alignItems:"center",gap:9,padding:"8px",borderRadius:8,marginBottom:2}} onClick={()=>setModal(q)}>
-        <CryptoLogo imageUrl={q.image} symbol={q.symbol} size={34}/>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <div style={{fontSize:13,fontWeight:600,color:C.text}}>{q.name}</div>
-            {q.rank&&<span style={{fontSize:9,color:C.faint,background:C.bg,padding:"1px 5px",borderRadius:4,border:`1px solid ${C.border}`}}>#{q.rank}</span>}
-          </div>
-          <div style={{fontSize:11,color:C.faint}}>{q.symbol}</div>
-        </div>
-        <Spark up={up} w={50} h={24}/>
-        <div style={{textAlign:"right",minWidth:84}}><div style={{fontSize:13,fontWeight:700,color:C.text,fontFamily:C.mono}}>${fmtPrice(q.c)}</div><div style={{fontSize:11,fontWeight:600,color:up?C.green:C.red,fontFamily:C.mono}}>{fmtPct(q.dp)}</div></div>
-        <PinBtn id={q.id} pinned={pinned} onToggle={togglePin}/>
+  const CryptoRow=({q})=>{const up=(q.dp||0)>=0;return(
+    <div className="rh" style={{display:"flex",alignItems:"center",gap:9,padding:"8px",borderRadius:8,marginBottom:2}} onClick={()=>setModal(q)}>
+      <CryptoLogo imageUrl={q.image} symbol={q.symbol} size={34}/>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{fontSize:13,fontWeight:600,color:C.text}}>{q.name}</div>{q.rank&&<span style={{fontSize:9,color:C.faint,background:C.bg,padding:"1px 5px",borderRadius:4,border:`1px solid ${C.border}`}}>#{q.rank}</span>}</div>
+        <div style={{fontSize:11,color:C.faint}}>{q.symbol}</div>
       </div>
-    );
-  };
+      <Spark up={up} w={50} h={24}/>
+      <div style={{textAlign:"right",minWidth:84}}><div style={{fontSize:13,fontWeight:700,color:C.text,fontFamily:C.mono}}>${fmtPrice(q.c)}</div><div style={{fontSize:11,fontWeight:600,color:up?C.green:C.red,fontFamily:C.mono}}>{fmtPct(q.dp)}</div></div>
+      <PinBtn id={q.id} pinned={pinned} onToggle={togglePin}/>
+    </div>
+  );};
 
   return(
     <div style={{background:C.bg,minHeight:"100vh",color:C.text,fontFamily:C.sans}}>
@@ -643,6 +663,7 @@ export default function App(){
         *{box-sizing:border-box;margin:0;padding:0}
         ::-webkit-scrollbar{width:4px;height:4px;background:#f1f5f9}
         ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+        .hide-scroll::-webkit-scrollbar{display:none}
         @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         @keyframes shimmer{0%,100%{opacity:1}50%{opacity:.4}}
         @keyframes spin{to{transform:rotate(360deg)}}
@@ -661,13 +682,8 @@ export default function App(){
         </div>
         <div style={{display:"flex",gap:1}}>
           {TABS.map(t=>(
-            <button key={t} onClick={()=>setTab(t)} style={{padding:"5px 10px",borderRadius:7,fontSize:12,fontWeight:600,fontFamily:C.sans,cursor:"pointer",border:"none",transition:"all 0.15s",
-              background:tab===t?(t==="watchlist"?"#fef9c3":C.accentBg):"transparent",
-              color:tab===t?(t==="watchlist"?C.amber:C.accent):C.muted,
-              textTransform:"capitalize",display:"flex",alignItems:"center",gap:4,
-            }}>
-              {t==="watchlist"&&"★ "}
-              {t}
+            <button key={t} onClick={()=>setTab(t)} style={{padding:"5px 10px",borderRadius:7,fontSize:12,fontWeight:600,fontFamily:C.sans,cursor:"pointer",border:"none",transition:"all 0.15s",background:tab===t?(t==="watchlist"?"#fef9c3":C.accentBg):"transparent",color:tab===t?(t==="watchlist"?C.amber:C.accent):C.muted,textTransform:"capitalize",display:"flex",alignItems:"center",gap:4}}>
+              {t==="watchlist"&&"★ "}{t}
               {t==="watchlist"&&pinned.size>0&&<span style={{background:C.amber,color:"white",borderRadius:10,padding:"1px 5px",fontSize:9,fontWeight:700}}>{pinned.size}</span>}
             </button>
           ))}
@@ -689,34 +705,51 @@ export default function App(){
 
       <TickerTape allQ={allQ} onSelect={setModal}/>
       <WatchlistStrip pinned={pinned} allQ={allQ} onSelect={setModal} onUnpin={togglePin} C={C}/>
+
       {modal&&<AssetModal q={modal} onClose={()=>setModal(null)} C={C} pinned={pinned} onToggle={togglePin}/>}
+      {customiseType&&<CustomiseModal type={customiseType} allQ={allQ} visible={customiseType==="stock"?visibleStocks:visibleCrypto}
+        onSave={(ids)=>{if(customiseType==="stock")setVisibleStocks(ids);else setVisibleCrypto(ids);setCustomiseType(null);}}
+        onClose={()=>setCustomiseType(null)} C={C}/>}
 
       <div style={{maxWidth:1200,margin:"0 auto",padding:"20px"}}>
 
         {/* ══ OVERVIEW ══ */}
         {tab==="overview"&&<div style={{animation:"fadeUp 0.25s ease"}}>
+
+          {/* AI Briefing — auto-generates on load */}
           <div style={{...card,marginBottom:16,background:briefDone?"linear-gradient(135deg,#eff6ff,#f5f3ff)":C.surface,borderColor:briefDone?"#bfdbfe":C.border}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:brief||briefing?14:0}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:30,height:30,borderRadius:9,background:"linear-gradient(135deg,#2563eb,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></div>
-                <div><div style={{fontSize:13,fontWeight:700,color:C.text}}>AI Morning Briefing</div><div style={{fontSize:11,color:C.faint}}>Powered by Claude</div></div>
+                <div style={{width:30,height:30,borderRadius:9,background:"linear-gradient(135deg,#2563eb,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                </div>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:C.text}}>AI Morning Briefing</div>
+                  <div style={{fontSize:11,color:C.faint}}>{briefing?"Generating now…":briefDone?"Updated just now · Powered by Claude":"Auto-generates when market data loads"}</div>
+                </div>
               </div>
-              <button onClick={generateBriefing} disabled={briefing} style={{padding:"7px 16px",borderRadius:9,fontSize:13,fontWeight:600,fontFamily:C.sans,cursor:briefing?"default":"pointer",border:"none",background:briefing?"#e2e8f0":"linear-gradient(135deg,#2563eb,#7c3aed)",color:briefing?C.muted:"white",boxShadow:briefing?"none":"0 2px 8px rgba(37,99,235,0.3)"}}>{briefing?"Generating…":"Generate briefing"}</button>
+              <button onClick={()=>generateBriefing()} disabled={briefing} style={{padding:"7px 16px",borderRadius:9,fontSize:13,fontWeight:600,fontFamily:C.sans,cursor:briefing?"default":"pointer",border:"none",background:briefing?"#e2e8f0":"linear-gradient(135deg,#2563eb,#7c3aed)",color:briefing?C.muted:"white",boxShadow:briefing?"none":"0 2px 8px rgba(37,99,235,0.3)"}}>
+                {briefing?"Generating…":"↻ Refresh"}
+              </button>
             </div>
-            {briefing&&<div style={{display:"flex",alignItems:"center",gap:8,color:C.muted,fontSize:13}}><span style={{display:"inline-block",width:14,height:14,border:"2px solid #e2e8f0",borderTopColor:C.accent,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>Analysing…</div>}
-            {brief&&<p style={{fontSize:14,lineHeight:1.75,color:C.text}}>{brief}</p>}
-            {!brief&&!briefing&&<p style={{fontSize:13,color:C.faint}}>AI-powered intelligence summary synthesising today's markets, crypto, news, congressional trades and prediction markets.</p>}
+            {briefing&&<div style={{display:"flex",alignItems:"center",gap:8,color:C.muted,fontSize:13}}><span style={{display:"inline-block",width:14,height:14,border:"2px solid #e2e8f0",borderTopColor:C.accent,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>Analysing live market data…</div>}
+            {brief&&<p style={{fontSize:14,lineHeight:1.8,color:C.text}}>{brief}</p>}
+            {!brief&&!briefing&&<p style={{fontSize:13,color:C.faint,fontStyle:"italic"}}>Loading market data — your briefing will appear automatically…</p>}
           </div>
 
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-            <div style={card}>
-              <div style={secTitle}>Key Markets <span style={{fontSize:10,background:C.accentBg,color:C.accent,padding:"1px 6px",borderRadius:4,marginLeft:4,fontWeight:600,letterSpacing:0}}>★ to pin · click to expand</span></div>
-              {Object.values(stockQ).slice(0,6).map(q=><StockRow key={q.id} q={q}/>)}
-            </div>
-            <div style={card}>
-              <div style={secTitle}>Top Crypto <span style={{fontSize:10,background:"#f5f3ff",color:"#7c3aed",padding:"1px 6px",borderRadius:4,marginLeft:4,fontWeight:600,letterSpacing:0}}>250 coins · ★ to pin</span></div>
-              {Object.values(cryptoQ).slice(0,6).map(q=><CryptoRow key={q.id} q={q}/>)}
-            </div>
+          {/* Scrollable stocks strip */}
+          <div style={{marginBottom:14}}>
+            <AssetStrip items={visibleStockItems} onSelect={setModal} onPin={togglePin} pinned={pinned} onCustomise={()=>setCustomiseType("stock")} label="Markets" accent={C.accent} C={C}/>
+          </div>
+
+          {/* Scrollable crypto strip */}
+          <div style={{marginBottom:14}}>
+            <AssetStrip items={visibleCryptoItems} onSelect={setModal} onPin={togglePin} pinned={pinned} onCustomise={()=>setCustomiseType("crypto")} label="Crypto" accent="#7c3aed" C={C}/>
+          </div>
+
+          {/* Top gainer / loser */}
+          <div style={{marginBottom:14}}>
+            <GainerLoserSection cryptoQ={cryptoQ} onSelect={setModal} C={C}/>
           </div>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
@@ -789,7 +822,6 @@ export default function App(){
 
         {/* ══ CRYPTO ══ */}
         {tab==="crypto"&&<div style={{animation:"fadeUp 0.25s ease"}}>
-          {/* Top 4 cards */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:16}}>
             {Object.values(cryptoQ).slice(0,4).map(q=>{const up=(q.dp||0)>=0;return(
               <div key={q.id} style={{...card,padding:16,cursor:"pointer",position:"relative"}} className="ch" onClick={()=>setModal(q)}>
@@ -801,46 +833,49 @@ export default function App(){
               </div>
             );})}
           </div>
-          {/* Full list with search */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
             <div style={card}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                 <div style={secTitle}>All Crypto <span style={{fontSize:10,background:"#f5f3ff",color:"#7c3aed",padding:"1px 6px",borderRadius:4,marginLeft:4,fontWeight:600,letterSpacing:0}}>{Object.keys(cryptoQ).length} coins</span></div>
               </div>
-              {/* Crypto search filter */}
               <div style={{position:"relative",marginBottom:12}}>
                 <svg style={{position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={C.faint} strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input value={cryptoSearch} onChange={e=>setCryptoSearch(e.target.value)} placeholder="Filter coins…"
-                  style={{width:"100%",padding:"6px 10px 6px 24px",borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,fontSize:12,color:C.text,fontFamily:C.sans,outline:"none"}}/>
+                <input value={cryptoSearch} onChange={e=>setCryptoSearch(e.target.value)} placeholder="Filter coins…" style={{width:"100%",padding:"6px 10px 6px 24px",borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,fontSize:12,color:C.text,fontFamily:C.sans,outline:"none"}}/>
               </div>
               <div style={{maxHeight:600,overflowY:"auto"}}>
                 {cryptoList.slice(0,100).map(q=><CryptoRow key={q.id} q={q}/>)}
                 {cryptoList.length>100&&<div style={{fontSize:12,color:C.faint,textAlign:"center",padding:"12px 0"}}>Showing top 100 — filter to narrow down</div>}
               </div>
             </div>
-            <div style={card}>
-              <div style={secTitle}>Polymarket — Crypto & Macro</div>
-              {poly.slice(0,7).map((p,i)=>(
-                <div key={i} style={{padding:"9px 0",borderBottom:`1px solid ${C.border}`}}>
-                  <div style={{fontSize:12,color:C.text,fontWeight:500,marginBottom:7,lineHeight:1.35}}>{p.question}</div>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{flex:1,height:5,background:"#f1f5f9",borderRadius:99,overflow:"hidden"}}><div style={{width:`${p.yes}%`,height:"100%",borderRadius:99,background:p.yes>60?C.green:p.yes>35?"#f59e0b":C.red}}/></div>
-                    <span style={{fontFamily:C.mono,fontSize:12,fontWeight:700,color:p.yes>50?C.green:C.amber,minWidth:32,textAlign:"right"}}>{p.yes}%</span>
-                    <span style={{fontSize:10,color:C.faint,minWidth:48,textAlign:"right"}}>{p.volume}</span>
+            <div>
+              <div style={{...card,marginBottom:14}}>
+                <div style={secTitle}>Top Gainer & Loser (24h · Top 100)</div>
+                <GainerLoserSection cryptoQ={cryptoQ} onSelect={setModal} C={C}/>
+              </div>
+              <div style={card}>
+                <div style={secTitle}>Polymarket — Crypto & Macro</div>
+                {poly.slice(0,6).map((p,i)=>(
+                  <div key={i} style={{padding:"9px 0",borderBottom:`1px solid ${C.border}`}}>
+                    <div style={{fontSize:12,color:C.text,fontWeight:500,marginBottom:7,lineHeight:1.35}}>{p.question}</div>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{flex:1,height:5,background:"#f1f5f9",borderRadius:99,overflow:"hidden"}}><div style={{width:`${p.yes}%`,height:"100%",borderRadius:99,background:p.yes>60?C.green:p.yes>35?"#f59e0b":C.red}}/></div>
+                      <span style={{fontFamily:C.mono,fontSize:12,fontWeight:700,color:p.yes>50?C.green:C.amber,minWidth:32,textAlign:"right"}}>{p.yes}%</span>
+                      <span style={{fontSize:10,color:C.faint,minWidth:48,textAlign:"right"}}>{p.volume}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>}
 
-        {/* ══ WATCHLIST TAB ══ */}
+        {/* ══ WATCHLIST ══ */}
         {tab==="watchlist"&&<div style={{animation:"fadeUp 0.25s ease"}}>
           {pinnedItems.length===0?(
             <div style={{...card,textAlign:"center",padding:60}}>
               <div style={{fontSize:40,marginBottom:16}}>★</div>
               <div style={{fontSize:18,fontWeight:700,color:C.text,marginBottom:8}}>Your watchlist is empty</div>
-              <div style={{fontSize:14,color:C.faint,maxWidth:400,margin:"0 auto",lineHeight:1.6}}>Pin any stock or crypto by clicking ★ on a row, on a card, or inside the detail modal after searching.</div>
+              <div style={{fontSize:14,color:C.faint,maxWidth:400,margin:"0 auto",lineHeight:1.6}}>Pin any stock or crypto by clicking ★ on a row, card, or inside the detail modal after searching.</div>
               <div style={{display:"flex",gap:10,justifyContent:"center",marginTop:20}}>
                 <button onClick={()=>setTab("markets")} style={{padding:"8px 18px",borderRadius:10,background:C.accentBg,color:C.accent,border:`1px solid #bfdbfe`,fontFamily:C.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>Browse Markets</button>
                 <button onClick={()=>setTab("crypto")} style={{padding:"8px 18px",borderRadius:10,background:"#f5f3ff",color:"#7c3aed",border:"1px solid #ddd6fe",fontFamily:C.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>Browse Crypto</button>
@@ -848,7 +883,6 @@ export default function App(){
             </div>
           ):(
             <>
-              {/* Summary cards */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:16}}>
                 {pinnedItems.map(q=>{const up=(q.dp||0)>=0;const sym=q.symbol||q.ticker;return(
                   <div key={q.id} style={{...card,padding:14,cursor:"pointer",position:"relative"}} className="ch" onClick={()=>setModal(q)}>
@@ -860,18 +894,8 @@ export default function App(){
                   </div>
                 );})}
               </div>
-              {pinnedStocks.length>0&&(
-                <div style={{...card,marginBottom:14}}>
-                  <div style={secTitle}>Pinned Stocks & ETFs <span style={{background:C.accentBg,color:C.accent,borderRadius:10,padding:"1px 6px",fontSize:10,marginLeft:4}}>{pinnedStocks.length}</span></div>
-                  {pinnedStocks.map(q=><StockRow key={q.id} q={q}/>)}
-                </div>
-              )}
-              {pinnedCrypto.length>0&&(
-                <div style={card}>
-                  <div style={secTitle}>Pinned Crypto <span style={{background:"#f5f3ff",color:"#7c3aed",borderRadius:10,padding:"1px 6px",fontSize:10,marginLeft:4}}>{pinnedCrypto.length}</span></div>
-                  {pinnedCrypto.map(q=><CryptoRow key={q.id} q={q}/>)}
-                </div>
-              )}
+              {pinnedStocks.length>0&&<div style={{...card,marginBottom:14}}><div style={secTitle}>Pinned Stocks & ETFs <span style={{background:C.accentBg,color:C.accent,borderRadius:10,padding:"1px 6px",fontSize:10,marginLeft:4}}>{pinnedStocks.length}</span></div>{pinnedStocks.map(q=><StockRow key={q.id} q={q}/>)}</div>}
+              {pinnedCrypto.length>0&&<div style={card}><div style={secTitle}>Pinned Crypto <span style={{background:"#f5f3ff",color:"#7c3aed",borderRadius:10,padding:"1px 6px",fontSize:10,marginLeft:4}}>{pinnedCrypto.length}</span></div>{pinnedCrypto.map(q=><CryptoRow key={q.id} q={q}/>)}</div>}
             </>
           )}
         </div>}
@@ -940,7 +964,6 @@ export default function App(){
 
       </div>
 
-      {/* Attribution required by tickerlogos.com terms */}
       <div style={{textAlign:"center",padding:"16px",fontSize:10,color:C.faint,borderTop:`1px solid ${C.border}`}}>
         Stock logos by <a href="https://www.allinvestview.com/tools/ticker-logos/" target="_blank" rel="noreferrer" style={{color:C.accent}}>AllInvestView Ticker Logos</a> · Crypto data by CoinGecko · Market data by Finnhub
       </div>
