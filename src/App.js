@@ -474,6 +474,266 @@ const DEMO_NEWS=[{id:1,source:"Reuters",headline:"Fed officials signal caution o
 const DEMO_CONGRESS=[{name:"Nancy Pelosi",party:"D",state:"CA",symbol:"NVDA",transactionType:"Buy",amount:"$1M–$5M",transactionDate:"2025-04-07"},{name:"Dan Crenshaw",party:"R",state:"TX",symbol:"LMT",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-05"},{name:"Josh Gottheimer",party:"D",state:"NJ",symbol:"MSFT",transactionType:"Sale",amount:"$500K–$1M",transactionDate:"2025-04-04"},{name:"Tommy Tuberville",party:"R",state:"AL",symbol:"XOM",transactionType:"Buy",amount:"$100K–$250K",transactionDate:"2025-04-03"},{name:"Ro Khanna",party:"D",state:"CA",symbol:"AMZN",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-02"}];
 const DEMO_TWEETS=[{handle:"RaoulGMI",name:"Raoul Pal",text:"The Everything Code keeps playing out. Liquidity drives all assets. Watch the Fed balance sheet, not the rate.",likes:"12.8K",time:"2h"},{handle:"elerianm",name:"Mohamed El-Erian",text:"Today's CPI print will be closely watched. Any upside surprise risks a sharp repricing in rate expectations.",likes:"7.1K",time:"3h"},{handle:"LukeGromen",name:"Luke Gromen",text:"The bond market is telling you something equities haven't priced yet. Fiscal dominance is here.",likes:"5.9K",time:"4h"},{handle:"naval",name:"Naval Ravikant",text:"Inflation is a hidden tax on savers. The monetary system redistributes from the cautious to the leveraged.",likes:"31.4K",time:"1h"},{handle:"APompliano",name:"Anthony Pompliano",text:"Bitcoin is up on the day while the dollar weakens. This is the trade of the decade.",likes:"9.3K",time:"2h"},{handle:"zerohedge",name:"ZeroHedge",text:"JPMorgan cuts GDP forecast — stagflation risks rising, strategists warn.",likes:"6.4K",time:"3h"}];
 
+// ─── REDDIT SIGNALS ───────────────────────────────────────────────────────────
+const APEWISDOM = "https://apewisdom.io/api/v1.0";
+
+const SUBREDDITS = [
+  {id:"all-stocks",  label:"All Stock Subs",  type:"stock",  color:"#ff4500"},
+  {id:"wallstreetbets",label:"r/WallStreetBets",type:"stock",color:"#ff4500"},
+  {id:"stocks",      label:"r/stocks",         type:"stock",  color:"#ff6314"},
+  {id:"investing",   label:"r/investing",      type:"stock",  color:"#ff7849"},
+  {id:"all-crypto",  label:"All Crypto Subs",  type:"crypto", color:"#9945ff"},
+  {id:"CryptoCurrency",label:"r/CryptoCurrency",type:"crypto",color:"#7c3aed"},
+  {id:"SatoshiStreetBets",label:"r/SatoshiStreetBets",type:"crypto",color:"#627eea"},
+];
+
+function RedditSignals({C,allQ,onSelect}){
+  const [filter,setFilter]=useState("all-stocks");
+  const [data,setData]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState(false);
+  const [lastUpdated,setLastUpdated]=useState(null);
+
+  const activeSub=SUBREDDITS.find(s=>s.id===filter)||SUBREDDITS[0];
+
+  const fetchData=useCallback(async(f)=>{
+    setLoading(true);setError(false);
+    try{
+      const res=await fetch(`${APEWISDOM}/filter/${f}`);
+      if(!res.ok)throw new Error("API error");
+      const d=await res.json();
+      setData(d.results||[]);
+      setLastUpdated(new Date());
+    }catch{
+      setError(true);
+      // Fallback demo data
+      setData([
+        {rank:1,ticker:"NVDA",name:"Nvidia",mentions:"847",upvotes:"3241",rank_24h_ago:"2",mentions_24h_ago:"412"},
+        {rank:2,ticker:"TSLA",name:"Tesla",mentions:"634",upvotes:"2187",rank_24h_ago:"1",mentions_24h_ago:"891"},
+        {rank:3,ticker:"AAPL",name:"Apple",mentions:"521",upvotes:"1843",rank_24h_ago:"3",mentions_24h_ago:"498"},
+        {rank:4,ticker:"META",name:"Meta",mentions:"418",upvotes:"1562",rank_24h_ago:"6",mentions_24h_ago:"201"},
+        {rank:5,ticker:"AMZN",name:"Amazon",mentions:"387",upvotes:"1234",rank_24h_ago:"4",mentions_24h_ago:"412"},
+        {rank:6,ticker:"SPY",name:"S&P 500 ETF",mentions:"341",upvotes:"987",rank_24h_ago:"5",mentions_24h_ago:"356"},
+        {rank:7,ticker:"PLTR",name:"Palantir",mentions:"298",upvotes:"876",rank_24h_ago:"9",mentions_24h_ago:"143"},
+        {rank:8,ticker:"AMD",name:"AMD",mentions:"276",upvotes:"812",rank_24h_ago:"7",mentions_24h_ago:"289"},
+        {rank:9,ticker:"MSFT",name:"Microsoft",mentions:"254",upvotes:"743",rank_24h_ago:"8",mentions_24h_ago:"267"},
+        {rank:10,ticker:"GME",name:"GameStop",mentions:"231",upvotes:"2341",rank_24h_ago:"14",mentions_24h_ago:"87"},
+        {rank:11,ticker:"COIN",name:"Coinbase",mentions:"198",upvotes:"567",rank_24h_ago:"10",mentions_24h_ago:"212"},
+        {rank:12,ticker:"HOOD",name:"Robinhood",mentions:"187",upvotes:"432",rank_24h_ago:"15",mentions_24h_ago:"65"},
+        {rank:13,ticker:"QQQ",name:"Nasdaq ETF",mentions:"176",upvotes:"398",rank_24h_ago:"11",mentions_24h_ago:"189"},
+        {rank:14,ticker:"NFLX",name:"Netflix",mentions:"165",upvotes:"376",rank_24h_ago:"13",mentions_24h_ago:"142"},
+        {rank:15,ticker:"SMCI",name:"Super Micro",mentions:"154",upvotes:"512",rank_24h_ago:"20",mentions_24h_ago:"43"},
+      ]);
+    }
+    setLoading(false);
+  },[]);
+
+  useEffect(()=>{fetchData(filter);},[filter,fetchData]);
+  // Refresh every 15 minutes
+  useEffect(()=>{const iv=setInterval(()=>fetchData(filter),15*60*1000);return()=>clearInterval(iv);},[filter,fetchData]);
+
+  const rankChange=(item)=>{
+    const prev=parseInt(item.rank_24h_ago||"0");
+    const curr=parseInt(item.rank||"0");
+    if(!prev||!curr)return null;
+    return prev-curr; // positive = climbed (was higher number before)
+  };
+
+  const topMover=data.length>0?[...data].sort((a,b)=>rankChange(b)-rankChange(a))[0]:null;
+
+  // Try to match ticker to known quote for logo
+  const getQ=(ticker)=>allQ[ticker]||Object.values(allQ).find(q=>q.ticker===ticker||q.symbol===ticker);
+
+  const card={background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:20};
+  const redditOrange="#ff4500";
+
+  return(
+    <div style={{animation:"fadeUp 0.25s ease"}}>
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          {/* Reddit logo */}
+          <div style={{width:36,height:36,borderRadius:10,background:"#ff4500",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="white"><circle cx="10" cy="10" r="10" fill="#ff4500"/><path d="M16.67 10a1.46 1.46 0 0 0-2.47-1 7.12 7.12 0 0 0-3.85-1.23l.65-3.08 2.13.45a1 1 0 1 0 1-.95 1 1 0 0 0-.96.68l-2.38-.5a.16.16 0 0 0-.19.12l-.73 3.44a7.14 7.14 0 0 0-3.89 1.23 1.46 1.46 0 1 0-1.61 2.39 2.87 2.87 0 0 0 0 .44c0 2.24 2.61 4.06 5.83 4.06s5.83-1.82 5.83-4.06a2.87 2.87 0 0 0 0-.44 1.46 1.46 0 0 0 .64-1.55zm-10 1.81a1 1 0 1 1 1 1 1 1 0 0 1-1-1zm5.58 2.64a3.56 3.56 0 0 1-2.25.63 3.56 3.56 0 0 1-2.25-.63.17.17 0 0 1 .23-.23 3.24 3.24 0 0 0 2 .5 3.24 3.24 0 0 0 2-.5.17.17 0 0 1 .23.23zm-.17-1.64a1 1 0 1 1 1-1 1 1 0 0 1-1 1z" fill="white"/></svg>
+          </div>
+          <div>
+            <div style={{fontSize:15,fontWeight:800,color:C.text,letterSpacing:"-0.02em"}}>Reddit Sentiment</div>
+            <div style={{fontSize:11,color:C.faint}}>
+              {loading?"Fetching latest data…":error?"Demo data (API unavailable)":lastUpdated?`Updated ${lastUpdated.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}`:""}
+              {" · "}via <a href="https://apewisdom.io" target="_blank" rel="noreferrer" style={{color:redditOrange}}>ApeWisdom</a>
+            </div>
+          </div>
+        </div>
+        <button onClick={()=>fetchData(filter)} disabled={loading} style={{padding:"6px 14px",borderRadius:9,border:`1px solid ${C.border}`,background:"transparent",fontSize:12,fontWeight:600,color:loading?C.faint:C.muted,cursor:loading?"default":"pointer",fontFamily:C.sans,display:"flex",alignItems:"center",gap:6}}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{animation:loading?"spin 1s linear infinite":"none"}}>
+            <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+
+      {/* Subreddit filter tabs */}
+      <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
+        {SUBREDDITS.map(s=>(
+          <button key={s.id} onClick={()=>setFilter(s.id)} style={{
+            padding:"6px 12px",borderRadius:20,fontSize:12,fontWeight:600,border:"none",cursor:"pointer",
+            fontFamily:C.sans,transition:"all 0.15s",
+            background:filter===s.id?s.color:"#f1f5f9",
+            color:filter===s.id?"white":C.muted,
+          }}>{s.label}</button>
+        ))}
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16}}>
+        {/* Main mentions table */}
+        <div style={card}>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:C.faint,marginBottom:14,fontFamily:C.sans,display:"flex",alignItems:"center",gap:8}}>
+            Most Mentioned · {activeSub.label}
+            {!loading&&data.length>0&&<span style={{fontSize:10,background:"#fff1ee",color:redditOrange,padding:"1px 7px",borderRadius:10,fontWeight:600}}>{data.length} tickers</span>}
+          </div>
+
+          {loading&&(
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {Array.from({length:8}).map((_,i)=>(
+                <div key={i} style={{height:52,borderRadius:10,background:"#f1f5f9",animation:"shimmer 1.2s ease-in-out infinite",opacity:0.6}}/>
+              ))}
+            </div>
+          )}
+
+          {!loading&&data.slice(0,20).map((item,i)=>{
+            const chg=rankChange(item);
+            const q=getQ(item.ticker);
+            const mentionChange=parseInt(item.mentions||0)-parseInt(item.mentions_24h_ago||0);
+            return(
+              <div key={i} className="rh" onClick={()=>q&&onSelect(q)}
+                style={{display:"flex",alignItems:"center",gap:10,padding:"9px 8px",borderRadius:10,marginBottom:3,cursor:q?"pointer":"default"}}>
+                {/* Rank */}
+                <div style={{width:28,textAlign:"center",flexShrink:0}}>
+                  <div style={{fontSize:13,fontWeight:700,color:C.muted,fontFamily:C.mono}}>#{item.rank}</div>
+                </div>
+                {/* Rank change */}
+                <div style={{width:24,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {chg>0&&<span style={{fontSize:10,fontWeight:700,color:C.green}}>▲{chg}</span>}
+                  {chg<0&&<span style={{fontSize:10,fontWeight:700,color:C.red}}>▼{Math.abs(chg)}</span>}
+                  {chg===0&&<span style={{fontSize:10,color:C.faint}}>—</span>}
+                </div>
+                {/* Logo if we have it */}
+                {q?<AssetLogo q={q} size={30}/>
+                 :<div style={{width:30,height:30,borderRadius:8,background:`#ff450015`,border:"1px solid #ff450030",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <span style={{fontSize:9,fontWeight:700,color:redditOrange}}>{item.ticker?.slice(0,4)}</span>
+                  </div>
+                }
+                {/* Name + ticker */}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:600,color:C.text}}>{item.name||item.ticker}</div>
+                  <div style={{fontSize:11,color:C.faint,fontFamily:C.mono}}>{item.ticker}</div>
+                </div>
+                {/* Mentions */}
+                <div style={{textAlign:"right",flexShrink:0}}>
+                  <div style={{fontSize:13,fontWeight:700,color:C.text}}>{Number(item.mentions).toLocaleString()} <span style={{fontSize:10,color:C.faint,fontWeight:400}}>mentions</span></div>
+                  <div style={{fontSize:11,color:mentionChange>=0?C.green:C.red,fontWeight:600}}>
+                    {mentionChange>=0?"+":""}{mentionChange} vs yesterday
+                  </div>
+                </div>
+                {/* Upvotes */}
+                <div style={{textAlign:"right",minWidth:60,flexShrink:0}}>
+                  <div style={{fontSize:12,color:C.muted,display:"flex",alignItems:"center",gap:3,justifyContent:"flex-end"}}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    {Number(item.upvotes).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Right column — top mover + stats */}
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+
+          {/* Top mover card */}
+          {topMover&&!loading&&(
+            <div style={{...card,background:"linear-gradient(135deg,#fff8f6,#fff1ee)",borderColor:"#fed7c3"}}>
+              <div style={{fontSize:10,fontWeight:700,color:redditOrange,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:12}}>🚀 Biggest Climber</div>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                {(()=>{const q=getQ(topMover.ticker);return q?<AssetLogo q={q} size={36}/>:<div style={{width:36,height:36,borderRadius:10,background:"#ff450020",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:11,fontWeight:700,color:redditOrange}}>{topMover.ticker?.slice(0,4)}</span></div>;})()}
+                <div>
+                  <div style={{fontSize:15,fontWeight:800,color:C.text}}>{topMover.name||topMover.ticker}</div>
+                  <div style={{fontSize:11,color:C.faint,fontFamily:C.mono}}>{topMover.ticker}</div>
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div style={{background:"white",borderRadius:10,padding:"10px 12px"}}>
+                  <div style={{fontSize:10,fontWeight:700,color:C.faint,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:2}}>Rank now</div>
+                  <div style={{fontSize:18,fontWeight:800,color:C.text,fontFamily:C.mono}}>#{topMover.rank}</div>
+                </div>
+                <div style={{background:"white",borderRadius:10,padding:"10px 12px"}}>
+                  <div style={{fontSize:10,fontWeight:700,color:C.faint,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:2}}>Was rank</div>
+                  <div style={{fontSize:18,fontWeight:800,color:C.muted,fontFamily:C.mono}}>#{topMover.rank_24h_ago}</div>
+                </div>
+                <div style={{background:"white",borderRadius:10,padding:"10px 12px",gridColumn:"1/-1"}}>
+                  <div style={{fontSize:10,fontWeight:700,color:C.faint,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:2}}>Mentions today</div>
+                  <div style={{fontSize:18,fontWeight:800,color:redditOrange,fontFamily:C.mono}}>{Number(topMover.mentions).toLocaleString()}</div>
+                  <div style={{fontSize:11,color:C.green,fontWeight:600,marginTop:2}}>+{rankChange(topMover)} rank positions ↑</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* What is this */}
+          <div style={{...card,background:C.bg}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.faint,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>About this feed</div>
+            <p style={{fontSize:12,color:C.muted,lineHeight:1.7,marginBottom:10}}>
+              Live sentiment data from Reddit's top finance communities. Mentions are counted from posts and comments in the last 24 hours. Rankings update every 15 minutes.
+            </p>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {[
+                {sub:"r/wallstreetbets",desc:"Retail traders, options, memes"},
+                {sub:"r/stocks",desc:"Long-term investing discussion"},
+                {sub:"r/investing",desc:"Portfolio strategy & analysis"},
+                {sub:"r/CryptoCurrency",desc:"Crypto news & discussion"},
+              ].map(({sub,desc})=>(
+                <div key={sub} style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{width:6,height:6,borderRadius:"50%",background:redditOrange,flexShrink:0}}/>
+                  <div>
+                    <span style={{fontSize:12,fontWeight:600,color:C.text}}>{sub}</span>
+                    <span style={{fontSize:11,color:C.faint}}> — {desc}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Heatmap-style top 5 */}
+          {!loading&&data.length>0&&(
+            <div style={card}>
+              <div style={{fontSize:11,fontWeight:700,color:C.faint,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:12}}>Mention share · Top 5</div>
+              {(()=>{
+                const top5=data.slice(0,5);
+                const totalMentions=top5.reduce((sum,d)=>sum+parseInt(d.mentions||0),0);
+                return top5.map((item,i)=>{
+                  const pct=totalMentions>0?Math.round(parseInt(item.mentions||0)/totalMentions*100):0;
+                  const colors=["#ff4500","#ff6314","#ff7849","#ff9472","#ffb8a0"];
+                  return(
+                    <div key={i} style={{marginBottom:10}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                        <span style={{fontSize:12,fontWeight:600,color:C.text}}>{item.ticker}</span>
+                        <span style={{fontSize:12,fontWeight:600,color:C.muted,fontFamily:C.mono}}>{pct}%</span>
+                      </div>
+                      <div style={{height:6,background:"#f1f5f9",borderRadius:99,overflow:"hidden"}}>
+                        <div style={{width:`${pct}%`,height:"100%",background:colors[i],borderRadius:99,transition:"width 0.5s"}}/>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App(){
   const [tab,setTab]=useState("overview");
@@ -945,22 +1205,7 @@ export default function App(){
         </div>}
 
         {/* ══ SIGNALS ══ */}
-        {tab==="signals"&&<div style={{animation:"fadeUp 0.25s ease"}}>
-          <div style={{...card,marginBottom:14,background:C.accentBg,borderColor:"#bfdbfe"}}><p style={{fontSize:13,color:C.accent,lineHeight:1.6}}>Signal feed — curated finance & crypto accounts. Connect the Twitter/X API ($100/mo Basic tier) for a live feed.</p></div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-            {DEMO_TWEETS.map((t,i)=>(
-              <div key={i} style={{...card}} className="ch">
-                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,paddingBottom:10,borderBottom:`1px solid ${C.border}`}}>
-                  <div style={{width:36,height:36,borderRadius:11,background:"linear-gradient(135deg,#2563eb,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"white",flexShrink:0}}>{t.handle[0].toUpperCase()}</div>
-                  <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700,color:C.text}}>{t.name}</div><div style={{fontSize:11,color:C.faint}}>@{t.handle}</div></div>
-                  <span style={{fontSize:11,color:C.faint}}>{t.time} ago</span>
-                </div>
-                <p style={{fontSize:13,lineHeight:1.65,color:C.text,marginBottom:10}}>{t.text}</p>
-                <div style={{fontSize:12,color:C.faint,display:"flex",alignItems:"center",gap:4}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>{t.likes}</div>
-              </div>
-            ))}
-          </div>
-        </div>}
+        {tab==="signals"&&<RedditSignals C={C} allQ={allQ} onSelect={setModal}/>}
 
       </div>
 
