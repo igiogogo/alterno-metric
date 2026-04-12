@@ -474,104 +474,170 @@ const DEMO_NEWS=[{id:1,source:"Reuters",headline:"Fed officials signal caution o
 const DEMO_CONGRESS=[{name:"Nancy Pelosi",party:"D",state:"CA",symbol:"NVDA",transactionType:"Buy",amount:"$1M–$5M",transactionDate:"2025-04-07"},{name:"Dan Crenshaw",party:"R",state:"TX",symbol:"LMT",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-05"},{name:"Josh Gottheimer",party:"D",state:"NJ",symbol:"MSFT",transactionType:"Sale",amount:"$500K–$1M",transactionDate:"2025-04-04"},{name:"Tommy Tuberville",party:"R",state:"AL",symbol:"XOM",transactionType:"Buy",amount:"$100K–$250K",transactionDate:"2025-04-03"},{name:"Ro Khanna",party:"D",state:"CA",symbol:"AMZN",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-02"}];
 const DEMO_TWEETS=[{handle:"RaoulGMI",name:"Raoul Pal",text:"The Everything Code keeps playing out. Liquidity drives all assets. Watch the Fed balance sheet, not the rate.",likes:"12.8K",time:"2h"},{handle:"elerianm",name:"Mohamed El-Erian",text:"Today's CPI print will be closely watched. Any upside surprise risks a sharp repricing in rate expectations.",likes:"7.1K",time:"3h"},{handle:"LukeGromen",name:"Luke Gromen",text:"The bond market is telling you something equities haven't priced yet. Fiscal dominance is here.",likes:"5.9K",time:"4h"},{handle:"naval",name:"Naval Ravikant",text:"Inflation is a hidden tax on savers. The monetary system redistributes from the cautious to the leveraged.",likes:"31.4K",time:"1h"},{handle:"APompliano",name:"Anthony Pompliano",text:"Bitcoin is up on the day while the dollar weakens. This is the trade of the decade.",likes:"9.3K",time:"2h"},{handle:"zerohedge",name:"ZeroHedge",text:"JPMorgan cuts GDP forecast — stagflation risks rising, strategists warn.",likes:"6.4K",time:"3h"}];
 
-// ─── TWITTER LIST EMBED ───────────────────────────────────────────────────────
-// To use your own list: go to twitter.com → Lists → create a list of finance accounts
-// → open the list → copy the list ID from the URL (twitter.com/i/lists/XXXXXXXX)
-// → set YOUR_LIST_ID below or pass it as a prop
-
-const DEFAULT_LIST_ID = "1369026195088871424"; // Curated macro/finance list (public)
-
-const FINANCE_ACCOUNTS = [
-  {handle:"RaoulGMI",      name:"Raoul Pal",         desc:"Global macro, liquidity cycles"},
-  {handle:"elerianm",      name:"Mohamed El-Erian",  desc:"Chief economist, geopolitics"},
-  {handle:"LukeGromen",    name:"Luke Gromen",        desc:"Fiscal dominance, dollar"},
-  {handle:"PeterSchiff",   name:"Peter Schiff",       desc:"Gold, Austrian economics"},
-  {handle:"APompliano",    name:"Anthony Pompliano",  desc:"Bitcoin, markets"},
-  {handle:"NickTimiraos",  name:"Nick Timiraos",      desc:"WSJ Fed reporter"},
-  {handle:"jnordvig",      name:"Jens Nordvig",       desc:"FX, macro strategy"},
-  {handle:"profplum99",    name:"Michael Plum",       desc:"Rates, macro"},
-  {handle:"zerohedge",     name:"ZeroHedge",          desc:"Markets, credit"},
-  {handle:"fleckenstein",  name:"Bill Fleckenstein",  desc:"Short selling, macro"},
+// ─── RSS NEWS FEED ────────────────────────────────────────────────────────────
+const RSS_SOURCES = [
+  {id:"reuters",      label:"Reuters",       color:"#ff8000", category:"markets"},
+  {id:"wsj",          label:"WSJ Markets",   color:"#0274b6", category:"markets"},
+  {id:"ft",           label:"FT",            color:"#fff1e0", textColor:"#990f3d", category:"markets"},
+  {id:"bloomberg",    label:"Bloomberg",     color:"#000000", category:"markets"},
+  {id:"coindesk",     label:"CoinDesk",      color:"#0f5ca3", category:"crypto"},
+  {id:"cointelegraph",label:"CoinTelegraph", color:"#2f9f6e", category:"crypto"},
+  {id:"investing",    label:"Investing.com", color:"#e63329", category:"markets"},
 ];
 
-function TwitterFeed({C}){
-  const [listId, setListId] = useState(DEFAULT_LIST_ID);
-  const [editMode, setEditMode] = useState(false);
-  const [inputVal, setInputVal] = useState(DEFAULT_LIST_ID);
-  const iframeRef = useRef(null);
+function timeAgoRss(ts){
+  if(!ts)return"";
+  const s=Math.floor(Date.now()/1000-ts);
+  if(s<60)return s+"s ago";
+  if(s<3600)return Math.floor(s/60)+"m ago";
+  if(s<86400)return Math.floor(s/3600)+"h ago";
+  return Math.floor(s/86400)+"d ago";
+}
 
-  const embedSrc = `https://platform.twitter.com/embed/List.html?dnt=true&id=${listId}&theme=light&chrome=noheader%20nofooter&lang=en`;
+function RssFeed({C}){
+  const [activeSource,setActiveSource]=useState("all");
+  const [feeds,setFeeds]=useState({}); // {sourceId: [items]}
+  const [loading,setLoading]=useState({});
+  const [lastUpdated,setLastUpdated]=useState(null);
+  const [categoryFilter,setCategoryFilter]=useState("all"); // all|markets|crypto
+
+  const fetchSource=useCallback(async(srcId)=>{
+    setLoading(prev=>({...prev,[srcId]:true}));
+    try{
+      const res=await fetch(`/api/rss?source=${srcId}`);
+      if(!res.ok)throw new Error("Feed error");
+      const d=await res.json();
+      setFeeds(prev=>({...prev,[srcId]:d.items||[]}));
+    }catch{
+      // Keep existing items or set empty
+      setFeeds(prev=>({...prev,[srcId]:prev[srcId]||[]}));
+    }
+    setLoading(prev=>({...prev,[srcId]:false}));
+  },[]);
+
+  const fetchAll=useCallback(async()=>{
+    await Promise.all(RSS_SOURCES.map(s=>fetchSource(s.id)));
+    setLastUpdated(new Date());
+  },[fetchSource]);
+
+  useEffect(()=>{fetchAll();},[fetchAll]);
+  // Refresh every 5 minutes
+  useEffect(()=>{const iv=setInterval(fetchAll,5*60*1000);return()=>clearInterval(iv);},[fetchAll]);
+
+  // Merge and sort all items
+  const allItems=Object.entries(feeds)
+    .flatMap(([srcId,items])=>items.map(item=>({...item,sourceId:srcId})))
+    .sort((a,b)=>b.timestamp-a.timestamp);
+
+  const filteredSources=RSS_SOURCES.filter(s=>categoryFilter==="all"||s.category===categoryFilter);
+
+  const displayItems=activeSource==="all"
+    ?allItems.filter(item=>filteredSources.some(s=>s.id===item.sourceId))
+    :feeds[activeSource]||[];
+
+  const isLoadingAny=Object.values(loading).some(Boolean);
+
+  const srcMeta=(id)=>RSS_SOURCES.find(s=>s.id===id);
 
   return(
-    <div style={{display:"flex",flexDirection:"column",gap:0,height:"100%"}}>
+    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       {/* Header */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:"16px 16px 0 0",padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div style={{padding:"14px 18px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          {/* X logo */}
-          <div style={{width:32,height:32,borderRadius:9,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          <div style={{width:32,height:32,borderRadius:9,background:"linear-gradient(135deg,#f97316,#dc2626)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
           </div>
           <div>
-            <div style={{fontSize:13,fontWeight:700,color:C.text}}>Finance Twitter · Live Feed</div>
-            <div style={{fontSize:11,color:C.faint}}>Embedded Twitter List — no API key required</div>
+            <div style={{fontSize:13,fontWeight:700,color:C.text}}>Live News Feed</div>
+            <div style={{fontSize:11,color:C.faint}}>
+              {isLoadingAny?"Fetching latest…":lastUpdated?`Updated ${lastUpdated.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}`:""}
+              {" · "}{displayItems.length} articles
+            </div>
           </div>
         </div>
-        <button onClick={()=>{setEditMode(e=>!e);setInputVal(listId);}}
-          style={{padding:"5px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",fontSize:12,fontWeight:600,color:C.muted,cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-          {editMode?"Cancel":"⚙ Use my list"}
-        </button>
-      </div>
-
-      {/* List ID editor */}
-      {editMode&&(
-        <div style={{background:"#fffbeb",border:`1px solid #fde68a`,borderTop:"none",padding:"12px 18px",display:"flex",gap:8,alignItems:"center"}}>
-          <div style={{flex:1}}>
-            <div style={{fontSize:12,fontWeight:600,color:"#92400e",marginBottom:4}}>
-              Paste your Twitter List ID — go to twitter.com → Lists → open your list → copy the number from the URL
-            </div>
-            <input value={inputVal} onChange={e=>setInputVal(e.target.value)}
-              placeholder="e.g. 1369026195088871424"
-              style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #fde68a",fontSize:12,fontFamily:"'JetBrains Mono',monospace",background:"white",outline:"none"}}/>
-          </div>
-          <button onClick={()=>{if(inputVal.trim())setListId(inputVal.trim());setEditMode(false);}}
-            style={{padding:"8px 16px",borderRadius:9,border:"none",background:"#000",color:"white",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif",flexShrink:0}}>
-            Apply
+        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+          {/* Category filter */}
+          {["all","markets","crypto"].map(cat=>(
+            <button key={cat} onClick={()=>{setCategoryFilter(cat);setActiveSource("all");}}
+              style={{padding:"4px 10px",borderRadius:20,fontSize:11,fontWeight:600,border:"none",cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif",
+                background:categoryFilter===cat?"#1e293b":"#f1f5f9",
+                color:categoryFilter===cat?"white":C.muted,
+                textTransform:"capitalize",transition:"all 0.15s"}}>
+              {cat}
+            </button>
+          ))}
+          <button onClick={fetchAll} disabled={isLoadingAny}
+            style={{padding:"5px 10px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",fontSize:12,fontWeight:600,color:isLoadingAny?C.faint:C.muted,cursor:isLoadingAny?"default":"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif",display:"flex",alignItems:"center",gap:4}}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{animation:isLoadingAny?"spin 1s linear infinite":"none"}}>
+              <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            Refresh
           </button>
         </div>
-      )}
-
-      {/* Embedded Twitter List iframe */}
-      <div style={{flex:1,background:C.surface,border:`1px solid ${C.border}`,borderTop:"none",borderRadius:"0 0 16px 16px",overflow:"hidden",minHeight:600}}>
-        <iframe
-          ref={iframeRef}
-          src={embedSrc}
-          style={{width:"100%",height:"100%",minHeight:600,border:"none",display:"block"}}
-          title="Finance Twitter Feed"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-        />
       </div>
 
-      {/* Accounts in this list */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:16,marginTop:12}}>
-        <div style={{fontSize:11,fontWeight:700,color:C.faint,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:12,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-          Suggested accounts to add to your list
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          {FINANCE_ACCOUNTS.map(a=>(
-            <a key={a.handle} href={`https://twitter.com/${a.handle}`} target="_blank" rel="noreferrer"
-              style={{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",borderRadius:10,background:C.bg,border:`1px solid ${C.border}`,textDecoration:"none",transition:"all 0.15s"}}
-              onMouseEnter={e=>e.currentTarget.style.borderColor="#bfdbfe"}
-              onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
-              <div style={{width:30,height:30,borderRadius:9,background:"linear-gradient(135deg,#1da1f2,#0d47a1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11,fontWeight:700,color:"white"}}>
-                {a.name[0]}
+      {/* Source tabs */}
+      <div style={{padding:"10px 18px",borderBottom:`1px solid ${C.border}`,display:"flex",gap:6,flexWrap:"wrap"}}>
+        <button onClick={()=>setActiveSource("all")} style={{padding:"5px 12px",borderRadius:20,fontSize:11,fontWeight:700,border:"none",cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif",background:activeSource==="all"?"#1e293b":"#f1f5f9",color:activeSource==="all"?"white":C.muted,transition:"all 0.15s"}}>
+          All Sources
+        </button>
+        {filteredSources.map(s=>(
+          <button key={s.id} onClick={()=>setActiveSource(s.id)}
+            style={{padding:"5px 12px",borderRadius:20,fontSize:11,fontWeight:700,border:"none",cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif",
+              background:activeSource===s.id?s.color:"#f1f5f9",
+              color:activeSource===s.id?(s.textColor||"white"):C.muted,
+              transition:"all 0.15s",display:"flex",alignItems:"center",gap:5}}>
+            {s.label}
+            {loading[s.id]&&<span style={{display:"inline-block",width:8,height:8,border:"1.5px solid rgba(255,255,255,0.4)",borderTopColor:"white",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>}
+            {!loading[s.id]&&feeds[s.id]&&<span style={{fontSize:9,opacity:0.7}}>{feeds[s.id].length}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* Articles list */}
+      <div style={{flex:1,overflowY:"auto",maxHeight:680}}>
+        {isLoadingAny&&displayItems.length===0&&(
+          <div style={{padding:24,display:"flex",flexDirection:"column",gap:10}}>
+            {Array.from({length:6}).map((_,i)=>(
+              <div key={i} style={{padding:"12px",borderRadius:10,background:"#f8fafc",border:`1px solid ${C.border}`}}>
+                <div style={{height:12,background:"#e2e8f0",borderRadius:6,marginBottom:8,width:`${70+Math.random()*25}%`,animation:"shimmer 1.2s ease-in-out infinite"}}/>
+                <div style={{height:10,background:"#e2e8f0",borderRadius:6,width:"40%",animation:"shimmer 1.2s ease-in-out infinite"}}/>
               </div>
-              <div style={{minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:700,color:C.text}}>{a.name}</div>
-                <div style={{fontSize:10,color:C.faint,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.desc}</div>
+            ))}
+          </div>
+        )}
+
+        {!isLoadingAny&&displayItems.length===0&&(
+          <div style={{padding:40,textAlign:"center",color:C.faint,fontSize:13}}>
+            No articles loaded — check your network or try refreshing.
+          </div>
+        )}
+
+        {displayItems.map((item,i)=>{
+          const src=srcMeta(item.sourceId);
+          return(
+            <a key={i} href={item.link} target="_blank" rel="noreferrer"
+              style={{display:"flex",gap:12,padding:"12px 18px",borderBottom:`1px solid ${C.border}`,textDecoration:"none",transition:"background 0.12s",cursor:"pointer"}}
+              onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"}
+              onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+              {/* Source badge */}
+              <div style={{flexShrink:0,paddingTop:2}}>
+                <span style={{display:"inline-block",padding:"2px 7px",borderRadius:6,fontSize:9,fontWeight:700,letterSpacing:"0.04em",
+                  background:src?.color||"#64748b",color:src?.textColor||"white",whiteSpace:"nowrap"}}>
+                  {src?.label||item.sourceId}
+                </span>
               </div>
+              {/* Title + time */}
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:600,color:C.text,lineHeight:1.5,marginBottom:3}}>{item.title}</div>
+                {item.description&&<div style={{fontSize:11,color:C.faint,lineHeight:1.4,marginBottom:3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{item.description}</div>}
+                <div style={{fontSize:10,color:C.faint,fontFamily:"'JetBrains Mono',monospace"}}>{timeAgoRss(item.timestamp)}</div>
+              </div>
+              {/* Arrow */}
+              <div style={{flexShrink:0,paddingTop:4,color:C.faint,fontSize:12}}>↗</div>
             </a>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -579,18 +645,13 @@ function TwitterFeed({C}){
 
 // ─── COMBINED SIGNALS TAB ─────────────────────────────────────────────────────
 function SignalsTab({C,allQ,onSelect}){
-  const [activePanel, setActivePanel] = useState("both"); // "both"|"reddit"|"twitter"
+  const [activePanel,setActivePanel]=useState("both");
   return(
     <div style={{animation:"fadeUp 0.25s ease"}}>
-      {/* Panel switcher */}
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
         <div style={{fontSize:13,fontWeight:700,color:C.text}}>Signals</div>
         <div style={{display:"flex",gap:4,marginLeft:"auto"}}>
-          {[
-            {id:"both",    label:"Both"},
-            {id:"reddit",  label:"Reddit"},
-            {id:"twitter", label:"Twitter"},
-          ].map(p=>(
+          {[{id:"both",label:"Both"},{id:"reddit",label:"Reddit Sentiment"},{id:"news",label:"News Feed"}].map(p=>(
             <button key={p.id} onClick={()=>setActivePanel(p.id)} style={{
               padding:"5px 12px",borderRadius:8,fontSize:12,fontWeight:600,border:"none",
               cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif",transition:"all 0.15s",
@@ -600,15 +661,14 @@ function SignalsTab({C,allQ,onSelect}){
           ))}
         </div>
       </div>
-
       {activePanel==="both"&&(
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"start"}}>
           <RedditSignals C={C} allQ={allQ} onSelect={onSelect}/>
-          <TwitterFeed C={C}/>
+          <RssFeed C={C}/>
         </div>
       )}
       {activePanel==="reddit"&&<RedditSignals C={C} allQ={allQ} onSelect={onSelect}/>}
-      {activePanel==="twitter"&&<TwitterFeed C={C}/>}
+      {activePanel==="news"&&<RssFeed C={C}/>}
     </div>
   );
 }
