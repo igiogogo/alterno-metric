@@ -283,7 +283,7 @@ function AssetModal({q,onClose,C,pinned,onToggle}){
 function CustomiseModal({type,allQ,visible,onSave,onClose,C}){
   const [selected,setSelected]=useState(new Set(visible));
   const toggle=(id)=>{setSelected(prev=>{const next=new Set(prev);if(next.has(id))next.delete(id);else next.add(id);return next;});};
-  const items=Object.values(allQ).filter(q=>isCryptoQ(q)====(type==="crypto"));
+  const items=Object.values(allQ).filter(q=>isCryptoQ(q)===(type==="crypto"));
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.55)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1001,padding:20,backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div style={{background:C.surface,borderRadius:20,width:"100%",maxWidth:520,maxHeight:"80vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 64px rgba(0,0,0,0.22)"}}>
