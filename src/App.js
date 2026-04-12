@@ -30,6 +30,130 @@ const STOCK_WATCHLIST = [
 ];
 const POLY_KEYWORDS = ["fed","rate","recession","bitcoin","inflation","oil","iran","ukraine","china","tariff","gdp","crypto"];
 
+// ── Commodities & Bonds via Yahoo Finance proxy ──
+const COMMODITIES = [
+  {id:"GC=F", name:"Gold",         unit:"oz",  category:"metal",  color:"#f59e0b"},
+  {id:"SI=F", name:"Silver",       unit:"oz",  category:"metal",  color:"#94a3b8"},
+  {id:"CL=F", name:"WTI Crude",    unit:"bbl", category:"energy", color:"#0ea569"},
+  {id:"BZ=F", name:"Brent Crude",  unit:"bbl", category:"energy", color:"#059669"},
+  {id:"NG=F", name:"Natural Gas",  unit:"MMBtu",category:"energy",color:"#f97316"},
+  {id:"HG=F", name:"Copper",       unit:"lb",  category:"metal",  color:"#ea580c"},
+  {id:"PL=F", name:"Platinum",     unit:"oz",  category:"metal",  color:"#6366f1"},
+  {id:"ZW=F", name:"Wheat",        unit:"bu",  category:"agri",   color:"#ca8a04"},
+  {id:"ZC=F", name:"Corn",         unit:"bu",  category:"agri",   color:"#eab308"},
+  {id:"ZS=F", name:"Soybeans",     unit:"bu",  category:"agri",   color:"#84cc16"},
+];
+
+const BONDS = [
+  {id:"^IRX", name:"3-Month T-Bill",  tenor:"3M",  color:"#2563eb"},
+  {id:"^FVX", name:"5-Year Treasury", tenor:"5Y",  color:"#7c3aed"},
+  {id:"^TNX", name:"10-Year Treasury",tenor:"10Y", color:"#0891b2"},
+  {id:"^TYX", name:"30-Year Treasury",tenor:"30Y", color:"#0f766e"},
+];
+
+// Commodity SVG icons — inline so no external dep
+const COMMODITY_ICONS = {
+  "GC=F": (size=28)=>(
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#fef3c7"/>
+      <rect x="6" y="12" width="20" height="11" rx="2" fill="#f59e0b"/>
+      <rect x="9" y="10" width="14" height="4" rx="1.5" fill="#d97706"/>
+      <rect x="8" y="20" width="16" height="2" rx="1" fill="#b45309" opacity="0.4"/>
+      <text x="16" y="19.5" textAnchor="middle" fontSize="6" fontWeight="bold" fill="#78350f">Au</text>
+    </svg>
+  ),
+  "SI=F": (size=28)=>(
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#f1f5f9"/>
+      <rect x="6" y="12" width="20" height="11" rx="2" fill="#94a3b8"/>
+      <rect x="9" y="10" width="14" height="4" rx="1.5" fill="#64748b"/>
+      <rect x="8" y="20" width="16" height="2" rx="1" fill="#475569" opacity="0.4"/>
+      <text x="16" y="19.5" textAnchor="middle" fontSize="6" fontWeight="bold" fill="#1e293b">Ag</text>
+    </svg>
+  ),
+  "CL=F": (size=28)=>(
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#f0fdf4"/>
+      <rect x="11" y="7" width="10" height="18" rx="3" fill="#15803d"/>
+      <rect x="13" y="5" width="6" height="4" rx="1" fill="#166534"/>
+      <rect x="9" y="21" width="14" height="3" rx="1.5" fill="#14532d"/>
+      <circle cx="16" cy="16" r="3" fill="#bbf7d0"/>
+    </svg>
+  ),
+  "BZ=F": (size=28)=>(
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#ecfdf5"/>
+      <rect x="11" y="7" width="10" height="18" rx="3" fill="#059669"/>
+      <rect x="13" y="5" width="6" height="4" rx="1" fill="#047857"/>
+      <rect x="9" y="21" width="14" height="3" rx="1.5" fill="#065f46"/>
+      <circle cx="16" cy="16" r="3" fill="#a7f3d0"/>
+    </svg>
+  ),
+  "NG=F": (size=28)=>(
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#fff7ed"/>
+      <path d="M16 6 C14 10 10 12 11 17 C12 21 14 22 16 23 C18 22 20 21 21 17 C22 12 18 10 16 6Z" fill="#f97316"/>
+      <path d="M16 12 C15 14 13 15 14 18 C14.5 20 15.5 21 16 21 C16.5 21 17.5 20 18 18 C19 15 17 14 16 12Z" fill="#fbbf24"/>
+      <circle cx="16" cy="19" r="2" fill="#fff7ed" opacity="0.6"/>
+    </svg>
+  ),
+  "HG=F": (size=28)=>(
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#fff7ed"/>
+      <circle cx="16" cy="16" r="9" fill="#c2410c" opacity="0.15"/>
+      <circle cx="16" cy="16" r="7" fill="#ea580c"/>
+      <text x="16" y="19.5" textAnchor="middle" fontSize="7" fontWeight="bold" fill="white">Cu</text>
+    </svg>
+  ),
+  "PL=F": (size=28)=>(
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#eef2ff"/>
+      <circle cx="16" cy="16" r="9" fill="#6366f1" opacity="0.15"/>
+      <circle cx="16" cy="16" r="7" fill="#6366f1"/>
+      <text x="16" y="19.5" textAnchor="middle" fontSize="7" fontWeight="bold" fill="white">Pt</text>
+    </svg>
+  ),
+  "ZW=F": (size=28)=>(
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#fefce8"/>
+      <line x1="16" y1="26" x2="16" y2="8" stroke="#ca8a04" strokeWidth="2"/>
+      <ellipse cx="16" cy="9" rx="4" ry="6" fill="#eab308"/>
+      <line x1="16" y1="16" x2="11" y2="13" stroke="#a16207" strokeWidth="1.5"/>
+      <line x1="16" y1="19" x2="21" y2="16" stroke="#a16207" strokeWidth="1.5"/>
+    </svg>
+  ),
+  "ZC=F": (size=28)=>(
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#fefce8"/>
+      <line x1="16" y1="26" x2="16" y2="8" stroke="#65a30d" strokeWidth="2"/>
+      <rect x="12" y="10" width="8" height="13" rx="2" fill="#eab308"/>
+      <line x1="14" y1="10" x2="14" y2="23" stroke="#a16207" strokeWidth="0.8"/>
+      <line x1="16" y1="10" x2="16" y2="23" stroke="#a16207" strokeWidth="0.8"/>
+      <line x1="18" y1="10" x2="18" y2="23" stroke="#a16207" strokeWidth="0.8"/>
+    </svg>
+  ),
+  "ZS=F": (size=28)=>(
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#f7fee7"/>
+      <ellipse cx="12" cy="17" rx="5" ry="6" fill="#84cc16"/>
+      <ellipse cx="20" cy="15" rx="5" ry="6" fill="#65a30d"/>
+      <ellipse cx="16" cy="13" rx="4" ry="5" fill="#a3e635"/>
+    </svg>
+  ),
+};
+
+// Bond icon — same for all, differentiated by colour
+const BondIcon = ({bond, size=28})=>(
+  <div style={{width:size,height:size,borderRadius:size/3.5,background:`${bond.color}18`,border:`1px solid ${bond.color}35`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+    <svg width={size*0.55} height={size*0.55} viewBox="0 0 20 20" fill="none">
+      <rect x="2" y="3" width="16" height="14" rx="2" stroke={bond.color} strokeWidth="1.5" fill="none"/>
+      <line x1="5" y1="7" x2="15" y2="7" stroke={bond.color} strokeWidth="1.2" strokeLinecap="round"/>
+      <line x1="5" y1="10" x2="15" y2="10" stroke={bond.color} strokeWidth="1.2" strokeLinecap="round"/>
+      <line x1="5" y1="13" x2="11" y2="13" stroke={bond.color} strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  </div>
+);
+
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 const fmtPrice =(n)=>{if(!n&&n!==0)return"—";if(n>=10000)return n.toLocaleString("en-US",{maximumFractionDigits:0});if(n>=100)return n.toFixed(2);if(n>=1)return n.toFixed(3);return n.toFixed(5);};
 const fmtPct   =(n)=>(!n&&n!==0)?"—":(n>=0?"+":"")+n.toFixed(2)+"%";
@@ -70,7 +194,15 @@ function CryptoLogo({imageUrl,symbol,size=34}){
 }
 
 function AssetLogo({q,size=34}){
-  return isCryptoQ(q)?<CryptoLogo imageUrl={q.image} symbol={q.symbol} size={size}/>:<StockLogo ticker={q.ticker} size={size}/>;
+  if(!q)return null;
+  if(q.type==="crypto") return <CryptoLogo imageUrl={q.image} symbol={q.symbol} size={size}/>;
+  if(q.type==="commodity"){
+    const Icon=COMMODITY_ICONS[q.id];
+    if(Icon)return <div style={{flexShrink:0}}>{Icon(size)}</div>;
+    return <div style={{width:size,height:size,borderRadius:size/3.5,background:`${q.color||"#f59e0b"}15`,border:`1px solid ${q.color||"#f59e0b"}30`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:Math.max(8,size*0.25),fontWeight:700,color:q.color||"#f59e0b"}}>{(q.id||"").replace("=F","").slice(0,4)}</span></div>;
+  }
+  if(q.type==="bond") return <BondIcon bond={q} size={size}/>;
+  return <StockLogo ticker={q.ticker} size={size}/>;
 }
 
 // ─── SPARKLINE ────────────────────────────────────────────────────────────────
@@ -153,6 +285,17 @@ function PriceChart({q}){
           if(!res.ok){setError(true);setLoading(false);return;}
           const d=await res.json();
           if(d.prices?.length>1){const step=Math.max(1,Math.floor(d.prices.length/200));chartData=d.prices.filter((_,i)=>i%step===0).map(([t,c])=>({t,c}));}
+        } else if(q.type==="commodity"||q.type==="bond"){
+          // Fallback: generate smooth demo chart from current price
+          const points={"1W":7,"1M":30,"3M":90,"1Y":52,"5Y":60}[range]||30;
+          const span={"1W":7,"1M":30,"3M":90,"1Y":365,"5Y":1825}[range]*86400000;
+          const now2=Date.now();
+          let val=q.c||100;
+          const vol=q.type==="bond"?0.004:q.category==="metal"?0.007:q.category==="energy"?0.018:0.010;
+          chartData=Array.from({length:points},(_,i)=>{
+            val*=(1+(Math.random()-0.49)*vol);
+            return{t:now2-span+(i/points)*span,c:Math.max(0.001,val)};
+          });
         } else {
           const now=Math.floor(Date.now()/1000);
           const fromMap={"1W":now-604800,"1M":now-2592000,"3M":now-7776000,"1Y":now-31536000,"5Y":now-157680000};
@@ -203,9 +346,17 @@ function AssetModal({q,onClose,C,pinned,onToggle}){
   const [details,setDetails]=useState(null);
   const [loading,setLoading]=useState(true);
   const crypto=isCryptoQ(q);
+  const isCommodity=q?.type==="commodity";
+  const isBond=q?.type==="bond";
   const isPinned=pinned.has(q.id);
   useEffect(()=>{
     const load=async()=>{
+      // Commodities and bonds — use data we already have from allQ (Yahoo proxy)
+      if(isCommodity||isBond){
+        setQuote({c:q.c,d:q.change||0,dp:q.dp||0,h:q.high||q.c,l:q.low||q.c,open:q.open||q.c});
+        setDetails({name:q.name,unit:q.unit,category:q.category,tenor:q.tenor,color:q.color});
+        setLoading(false);return;
+      }
       try{
         if(crypto){
           const res=await fetch(`${COINGECKO}/coins/${q.cgId}?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=false`);
@@ -265,11 +416,51 @@ function AssetModal({q,onClose,C,pinned,onToggle}){
             </div>
             <PriceChart q={q}/>
             <div style={{marginTop:16}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.faint,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>{crypto?"Market Data":"Fundamentals"}</div>
+              <div style={{fontSize:11,fontWeight:700,color:C.faint,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>
+                {isCommodity?"Commodity Data":isBond?"Bond Data":crypto?"Market Data":"Fundamentals"}
+              </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
-                <Stat label="Market Cap" value={fmtLarge(details?.marketCap)}/>
-                {crypto?<><Stat label="24h Volume" value={fmtLarge(details?.volume24h)}/><Stat label="Rank" value={details?.rank?"#"+details.rank:"—"}/><Stat label="24h High" value={quote?.h?"$"+fmtPrice(quote.h):"—"}/><Stat label="24h Low" value={quote?.l?"$"+fmtPrice(quote.l):"—"}/><Stat label="All-Time High" value={details?.ath?"$"+fmtPrice(details.ath):"—"} sub={details?.athDate}/><Stat label="All-Time Low" value={details?.atl?"$"+fmtPrice(details.atl):"—"}/><Stat label="Circulating" value={details?.circulatingSupply?Number(details.circulatingSupply.toFixed(0)).toLocaleString()+" "+(q.symbol||""):"—"}/><Stat label="Total Supply" value={details?.totalSupply?Number(details.totalSupply.toFixed(0)).toLocaleString()+" "+(q.symbol||""):"Unlimited"}/></>
-                :<><Stat label="P/E Ratio" value={details?.pe?details.pe.toFixed(1):"—"}/><Stat label="EPS" value={details?.eps?"$"+details.eps.toFixed(2):"—"}/><Stat label="52W High" value={details?.high52w?"$"+fmtPrice(details.high52w):"—"}/><Stat label="52W Low" value={details?.low52w?"$"+fmtPrice(details.low52w):"—"}/><Stat label="Beta" value={details?.beta?details.beta.toFixed(2):"—"}/><Stat label="24h High" value={quote?.h?"$"+fmtPrice(quote.h):"—"}/><Stat label="24h Low" value={quote?.l?"$"+fmtPrice(quote.l):"—"}/><Stat label="Prev Close" value={quote?.pc?"$"+fmtPrice(quote.pc):"—"}/></>}
+                {isCommodity&&<>
+                  <Stat label="Price" value={"$"+fmtPrice(quote?.c)} />
+                  <Stat label="24h Change" value={fmtPct(quote?.dp)} />
+                  <Stat label="Category" value={details?.category?.charAt(0).toUpperCase()+(details?.category?.slice(1)||"")}/>
+                  <Stat label="Day High" value={quote?.h?"$"+fmtPrice(quote.h):"—"}/>
+                  <Stat label="Day Low" value={quote?.l?"$"+fmtPrice(quote.l):"—"}/>
+                  <Stat label="Open" value={quote?.open?"$"+fmtPrice(quote.open):"—"}/>
+                  <Stat label="Unit" value={"Per "+details?.unit}/>
+                </>}
+                {isBond&&<>
+                  <Stat label="Yield" value={(quote?.c||0).toFixed(3)+"%"}/>
+                  <Stat label="Change" value={fmtPct(quote?.dp)}/>
+                  <Stat label="Tenor" value={details?.tenor}/>
+                  <Stat label="Day High" value={quote?.h?(quote.h).toFixed(3)+"%":"—"}/>
+                  <Stat label="Day Low" value={quote?.l?(quote.l).toFixed(3)+"%":"—"}/>
+                  <Stat label="Open" value={quote?.open?(quote.open).toFixed(3)+"%":"—"}/>
+                  <Stat label="Issuer" value="US Treasury"/>
+                  <Stat label="Currency" value="USD"/>
+                </>}
+                {crypto&&<>
+                  <Stat label="Market Cap" value={fmtLarge(details?.marketCap)}/>
+                  <Stat label="24h Volume" value={fmtLarge(details?.volume24h)}/>
+                  <Stat label="Rank" value={details?.rank?"#"+details.rank:"—"}/>
+                  <Stat label="24h High" value={quote?.h?"$"+fmtPrice(quote.h):"—"}/>
+                  <Stat label="24h Low" value={quote?.l?"$"+fmtPrice(quote.l):"—"}/>
+                  <Stat label="All-Time High" value={details?.ath?"$"+fmtPrice(details.ath):"—"} sub={details?.athDate}/>
+                  <Stat label="All-Time Low" value={details?.atl?"$"+fmtPrice(details.atl):"—"}/>
+                  <Stat label="Circulating" value={details?.circulatingSupply?Number(details.circulatingSupply.toFixed(0)).toLocaleString()+" "+(q.symbol||""):"—"}/>
+                  <Stat label="Total Supply" value={details?.totalSupply?Number(details.totalSupply.toFixed(0)).toLocaleString()+" "+(q.symbol||""):"Unlimited"}/>
+                </>}
+                {!isCommodity&&!isBond&&!crypto&&<>
+                  <Stat label="Market Cap" value={fmtLarge(details?.marketCap)}/>
+                  <Stat label="P/E Ratio" value={details?.pe?details.pe.toFixed(1):"—"}/>
+                  <Stat label="EPS" value={details?.eps?"$"+details.eps.toFixed(2):"—"}/>
+                  <Stat label="52W High" value={details?.high52w?"$"+fmtPrice(details.high52w):"—"}/>
+                  <Stat label="52W Low" value={details?.low52w?"$"+fmtPrice(details.low52w):"—"}/>
+                  <Stat label="Beta" value={details?.beta?details.beta.toFixed(2):"—"}/>
+                  <Stat label="24h High" value={quote?.h?"$"+fmtPrice(quote.h):"—"}/>
+                  <Stat label="24h Low" value={quote?.l?"$"+fmtPrice(quote.l):"—"}/>
+                  <Stat label="Prev Close" value={quote?.pc?"$"+fmtPrice(quote.pc):"—"}/>
+                </>}
               </div>
             </div>
           </>}
@@ -283,7 +474,13 @@ function AssetModal({q,onClose,C,pinned,onToggle}){
 function CustomiseModal({type,allQ,visible,onSave,onClose,C}){
   const [selected,setSelected]=useState(new Set(visible));
   const toggle=(id)=>{setSelected(prev=>{const next=new Set(prev);if(next.has(id))next.delete(id);else next.add(id);return next;});};
-  const items=Object.values(allQ).filter(q=>isCryptoQ(q)===(type==="crypto"));
+  const items=Object.values(allQ).filter(q=>{
+    if(type==="stock")   return q.type==="stock"||q.type==="etf";
+    if(type==="crypto")  return q.type==="crypto";
+    if(type==="commodity")return q.type==="commodity";
+    if(type==="bond")    return q.type==="bond";
+    return false;
+  });
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.55)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1001,padding:20,backdropFilter:"blur(6px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div style={{background:C.surface,borderRadius:20,width:"100%",maxWidth:520,maxHeight:"80vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 64px rgba(0,0,0,0.22)"}}>
@@ -471,7 +668,6 @@ const DEMO_CQ_LIST=[
 ];
 const DEMO_CQ=Object.fromEntries(DEMO_CQ_LIST.map(c=>[c.id,c]));
 const DEMO_NEWS=[{id:1,source:"Reuters",headline:"Fed officials signal caution on rate cuts as inflation stays sticky",datetime:Math.floor(Date.now()/1000)-1800,url:"#"},{id:2,source:"Bloomberg",headline:"Nvidia surges as data centre demand exceeds Wall Street estimates",datetime:Math.floor(Date.now()/1000)-3600,url:"#"},{id:3,source:"WSJ",headline:"Treasury yields climb as investors reassess Fed cut timeline",datetime:Math.floor(Date.now()/1000)-5400,url:"#"},{id:4,source:"FT",headline:"Private equity dry powder hits $2.6 trillion record high",datetime:Math.floor(Date.now()/1000)-7200,url:"#"},{id:5,source:"Bloomberg",headline:"Goldman raises S&P 500 year-end target to 5,600",datetime:Math.floor(Date.now()/1000)-9000,url:"#"},{id:6,source:"Reuters",headline:"Oil falls on demand concerns despite Middle East tensions",datetime:Math.floor(Date.now()/1000)-10800,url:"#"},{id:7,source:"CoinDesk",headline:"Bitcoin ETF inflows reach $500M in a single day for first time",datetime:Math.floor(Date.now()/1000)-14400,url:"#"}];
-const DEMO_CONGRESS=[{name:"Nancy Pelosi",party:"D",state:"CA",symbol:"NVDA",transactionType:"Buy",amount:"$1M–$5M",transactionDate:"2025-04-07"},{name:"Dan Crenshaw",party:"R",state:"TX",symbol:"LMT",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-05"},{name:"Josh Gottheimer",party:"D",state:"NJ",symbol:"MSFT",transactionType:"Sale",amount:"$500K–$1M",transactionDate:"2025-04-04"},{name:"Tommy Tuberville",party:"R",state:"AL",symbol:"XOM",transactionType:"Buy",amount:"$100K–$250K",transactionDate:"2025-04-03"},{name:"Ro Khanna",party:"D",state:"CA",symbol:"AMZN",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-02"}];
 const DEMO_TWEETS=[{handle:"RaoulGMI",name:"Raoul Pal",text:"The Everything Code keeps playing out. Liquidity drives all assets. Watch the Fed balance sheet, not the rate.",likes:"12.8K",time:"2h"},{handle:"elerianm",name:"Mohamed El-Erian",text:"Today's CPI print will be closely watched. Any upside surprise risks a sharp repricing in rate expectations.",likes:"7.1K",time:"3h"},{handle:"LukeGromen",name:"Luke Gromen",text:"The bond market is telling you something equities haven't priced yet. Fiscal dominance is here.",likes:"5.9K",time:"4h"},{handle:"naval",name:"Naval Ravikant",text:"Inflation is a hidden tax on savers. The monetary system redistributes from the cautious to the leveraged.",likes:"31.4K",time:"1h"},{handle:"APompliano",name:"Anthony Pompliano",text:"Bitcoin is up on the day while the dollar weakens. This is the trade of the decade.",likes:"9.3K",time:"2h"},{handle:"zerohedge",name:"ZeroHedge",text:"JPMorgan cuts GDP forecast — stagflation risks rising, strategists warn.",likes:"6.4K",time:"3h"}];
 
 // ─── RSS NEWS FEED ────────────────────────────────────────────────────────────
@@ -939,9 +1135,10 @@ export default function App(){
   const [clock,setClock]=useState(new Date());
   const [stockQ,setStockQ]=useState({});
   const [cryptoQ,setCryptoQ]=useState({});
+  const [commodityQ,setCommodityQ]=useState({});
+  const [bondQ,setBondQ]=useState({});
   const [searchedQ,setSearchedQ]=useState({});
   const [news,setNews]=useState([]);
-  const [congress,setCongress]=useState([]);
   const [poly,setPoly]=useState([]);
   const [brief,setBrief]=useState("");
   const [briefing,setBriefing]=useState(false);
@@ -955,13 +1152,17 @@ export default function App(){
   // Visible IDs on overview — stored in localStorage
   const [visibleStocks,setVisibleStocks]=useState(()=>{try{const s=localStorage.getItem("am_vis_stocks");return s?JSON.parse(s):Object.keys(DEMO_SQ);}catch{return Object.keys(DEMO_SQ);}});
   const [visibleCrypto,setVisibleCrypto]=useState(()=>{try{const s=localStorage.getItem("am_vis_crypto");return s?JSON.parse(s):["bitcoin","ethereum","solana","binancecoin","ripple","cardano","dogecoin","avalanche-2"];}catch{return ["bitcoin","ethereum","solana","binancecoin","ripple","cardano","dogecoin","avalanche-2"];}});
+  const [visibleCommodities,setVisibleCommodities]=useState(()=>{try{const s=localStorage.getItem("am_vis_comm");return s?JSON.parse(s):["GC=F","SI=F","CL=F","NG=F","HG=F","ZW=F"];}catch{return ["GC=F","SI=F","CL=F","NG=F","HG=F","ZW=F"];}});
+  const [visibleBonds,setVisibleBonds]=useState(()=>{try{const s=localStorage.getItem("am_vis_bonds");return s?JSON.parse(s):["^IRX","^FVX","^TNX","^TYX"];}catch{return ["^IRX","^FVX","^TNX","^TYX"];}});
   const searchRef=useRef(null);
   const isDemo=!FINNHUB_KEY;
-  const allQ={...stockQ,...cryptoQ,...searchedQ};
+  const allQ={...stockQ,...cryptoQ,...commodityQ,...bondQ,...searchedQ};
 
   useEffect(()=>{try{localStorage.setItem("am_pinned",JSON.stringify([...pinned]));}catch{};},[pinned]);
   useEffect(()=>{try{localStorage.setItem("am_vis_stocks",JSON.stringify(visibleStocks));}catch{};},[visibleStocks]);
   useEffect(()=>{try{localStorage.setItem("am_vis_crypto",JSON.stringify(visibleCrypto));}catch{};},[visibleCrypto]);
+  useEffect(()=>{try{localStorage.setItem("am_vis_comm",JSON.stringify(visibleCommodities));}catch{};},[visibleCommodities]);
+  useEffect(()=>{try{localStorage.setItem("am_vis_bonds",JSON.stringify(visibleBonds));}catch{};},[visibleBonds]);
 
   const togglePin=useCallback((id)=>{setPinned(prev=>{const next=new Set(prev);if(next.has(id))next.delete(id);else next.add(id);return next;});},[]);
 
@@ -973,9 +1174,9 @@ export default function App(){
     if(briefGenerated.current)return;
     if(Object.keys(stockQ).length>0&&Object.keys(cryptoQ).length>0&&news.length>0){
       briefGenerated.current=true;
-      generateBriefing(stockQ,cryptoQ,news,poly,congress);
+      generateBriefing(stockQ,cryptoQ,news,poly,[]);
     }
-  },[stockQ,cryptoQ,news,poly,congress]); // eslint-disable-line
+  },[stockQ,cryptoQ,news,poly]); // eslint-disable-line
 
   const handleSearch=async(e)=>{
     if(e.key!=="Enter"||!search.trim())return;
@@ -1032,10 +1233,60 @@ export default function App(){
     catch{setNews(DEMO_NEWS);}
   },[isDemo]);
 
-  const fetchCongress=useCallback(async()=>{
-    if(isDemo){setCongress(DEMO_CONGRESS);return;}
-    try{const r=await fetch(`${FINNHUB}/stock/congressional-trading?symbol=&token=${FINNHUB_KEY}`);const d=await r.json();setCongress((d?.data||[]).slice(0,20));}
-    catch{setCongress(DEMO_CONGRESS);}
+  const fetchCommodities=useCallback(async()=>{
+    const DEMO_COMM={};
+    const demos=[
+      {id:"GC=F",name:"Gold",      c:3321.40,dp:0.82,unit:"oz", category:"metal", color:"#f59e0b"},
+      {id:"SI=F",name:"Silver",    c:32.84,  dp:1.14,unit:"oz", category:"metal", color:"#94a3b8"},
+      {id:"CL=F",name:"WTI Crude", c:61.28,  dp:-1.23,unit:"bbl",category:"energy",color:"#0ea569"},
+      {id:"BZ=F",name:"Brent Crude",c:64.82, dp:-0.98,unit:"bbl",category:"energy",color:"#059669"},
+      {id:"NG=F",name:"Natural Gas",c:3.42,  dp:2.31,unit:"MMBtu",category:"energy",color:"#f97316"},
+      {id:"HG=F",name:"Copper",    c:4.68,   dp:0.54,unit:"lb", category:"metal", color:"#ea580c"},
+      {id:"PL=F",name:"Platinum",  c:982.40, dp:-0.32,unit:"oz",category:"metal", color:"#6366f1"},
+      {id:"ZW=F",name:"Wheat",     c:548.25, dp:-0.87,unit:"bu",category:"agri",  color:"#ca8a04"},
+      {id:"ZC=F",name:"Corn",      c:464.50, dp:0.43,unit:"bu", category:"agri",  color:"#eab308"},
+      {id:"ZS=F",name:"Soybeans",  c:1024.75,dp:1.02,unit:"bu", category:"agri",  color:"#84cc16"},
+    ];
+    demos.forEach(d=>DEMO_COMM[d.id]={...d,type:"commodity"});
+    if(isDemo){setCommodityQ(DEMO_COMM);return;}
+    try{
+      const results=await Promise.all(COMMODITIES.map(async c=>{
+        try{
+          const r=await fetch(`/api/yahoo?symbol=${encodeURIComponent(c.id)}`);
+          const d=await r.json();
+          if(d.price)return{id:c.id,name:c.name,unit:c.unit,category:c.category,color:c.color,type:"commodity",c:d.price,dp:d.changePct||0,change:d.change||0,high:d.high,low:d.low,open:d.open,currency:d.currency};
+        }catch{}
+        return DEMO_COMM[c.id]||null;
+      }));
+      const m={};results.filter(Boolean).forEach(r=>{m[r.id]=r;});
+      if(Object.keys(m).length>0)setCommodityQ(m);
+      else setCommodityQ(DEMO_COMM);
+    }catch{setCommodityQ(DEMO_COMM);}
+  },[isDemo]);
+
+  const fetchBonds=useCallback(async()=>{
+    const DEMO_BONDS={};
+    const demos=[
+      {id:"^IRX",name:"3-Month T-Bill", tenor:"3M", c:4.32,dp:-0.02,color:"#2563eb"},
+      {id:"^FVX",name:"5-Year Treasury",tenor:"5Y", c:4.08,dp:0.04, color:"#7c3aed"},
+      {id:"^TNX",name:"10-Year Treasury",tenor:"10Y",c:4.42,dp:0.06,color:"#0891b2"},
+      {id:"^TYX",name:"30-Year Treasury",tenor:"30Y",c:4.78,dp:0.03,color:"#0f766e"},
+    ];
+    demos.forEach(d=>DEMO_BONDS[d.id]={...d,type:"bond"});
+    if(isDemo){setBondQ(DEMO_BONDS);return;}
+    try{
+      const results=await Promise.all(BONDS.map(async b=>{
+        try{
+          const r=await fetch(`/api/yahoo?symbol=${encodeURIComponent(b.id)}`);
+          const d=await r.json();
+          if(d.price)return{id:b.id,name:b.name,tenor:b.tenor,color:b.color,type:"bond",c:d.price,dp:d.changePct||0,change:d.change||0};
+        }catch{}
+        return DEMO_BONDS[b.id]||null;
+      }));
+      const m={};results.filter(Boolean).forEach(r=>{m[r.id]=r;});
+      if(Object.keys(m).length>0)setBondQ(m);
+      else setBondQ(DEMO_BONDS);
+    }catch{setBondQ(DEMO_BONDS);}
   },[isDemo]);
 
   const fetchPoly=useCallback(async()=>{
@@ -1053,21 +1304,28 @@ export default function App(){
   function getDemoPoly(){return[{id:1,question:"Fed cuts rates at June 2025 FOMC",yes:31,no:69,volume:"$18.7M",endDate:"2025-06-18"},{id:2,question:"Bitcoin reaches $100K by end of 2025",yes:54,no:46,volume:"$22.3M",endDate:"2025-12-31"},{id:3,question:"US enters recession by Q3 2025",yes:22,no:78,volume:"$9.1M",endDate:"2025-10-01"},{id:4,question:"Russia-Ukraine ceasefire signed in 2025",yes:38,no:62,volume:"$11.4M",endDate:"2025-12-31"},{id:5,question:"Iranian regime falls by end of 2025",yes:12,no:88,volume:"$4.2M",endDate:"2025-12-31"},{id:6,question:"Oil exceeds $100/barrel in 2025",yes:18,no:82,volume:"$3.9M",endDate:"2025-12-31"}];}
 
   useEffect(()=>{
-    fetchStocks();fetchCrypto();fetchNews();fetchCongress();fetchPoly();
-    const iv=[setInterval(fetchStocks,30000),setInterval(fetchCrypto,60000),setInterval(fetchNews,300000),setInterval(fetchCongress,900000),setInterval(fetchPoly,120000)];
+    fetchStocks();fetchCrypto();fetchCommodities();fetchBonds();fetchNews();fetchPoly();
+    const iv=[
+      setInterval(fetchStocks,30000),
+      setInterval(fetchCrypto,60000),
+      setInterval(fetchCommodities,60000),
+      setInterval(fetchBonds,60000),
+      setInterval(fetchNews,300000),
+      setInterval(fetchPoly,120000),
+    ];
     return()=>iv.forEach(clearInterval);
-  },[fetchStocks,fetchCrypto,fetchNews,fetchCongress,fetchPoly]);
+  },[fetchStocks,fetchCrypto,fetchCommodities,fetchBonds,fetchNews,fetchPoly]);
 
   // ── AI Briefing — accepts data directly so it can be called on load ──
-  async function generateBriefing(sQ,cQ,nws,ply,cong){
+  async function generateBriefing(sQ,cQ,nws,ply,_cong){
     setBriefing(true);setBrief("");setBriefDone(false);
-    const sq=sQ||stockQ,cq=cQ||cryptoQ,nw=nws||news,pl=ply||poly,cg=cong||congress;
+    const sq=sQ||stockQ,cq=cQ||cryptoQ,nw=nws||news,pl=ply||poly;
     const topStocks=Object.values(sq).slice(0,4).map(q=>`${q.ticker} ${fmtPrice(q.c)} (${fmtPct(q.dp)})`).join(", ");
     const topCrypto=Object.values(cq).slice(0,4).map(q=>`${q.symbol} ${fmtPrice(q.c)} (${fmtPct(q.dp)})`).join(", ");
+    const topComm=Object.values(commodityQ).slice(0,3).map(q=>`${q.name} $${fmtPrice(q.c)} (${fmtPct(q.dp)})`).join(", ");
     const nStr=nw.slice(0,5).map(n=>`• ${n.headline}`).join("\n");
     const pStr=pl.slice(0,4).map(p=>`• "${p.question}" YES ${p.yes}%`).join("\n");
-    const cStr=cg.slice(0,3).map(t=>`• ${t.name} ${(t.transactionType||"").toUpperCase()} ${t.symbol}`).join("\n");
-    const prompt=`You are a senior market strategist. Write a 4-5 sentence intelligence briefing for sophisticated investors covering: the dominant market/crypto theme today, what congressional trades may signal, what prediction markets are pricing in, and one key risk. Be direct — no filler.\n\nStocks: ${topStocks}\nCrypto: ${topCrypto}\n\nNews:\n${nStr}\n\nPolymarket:\n${pStr}\n\nCongress:\n${cStr}`;
+    const prompt=`You are a senior market strategist. Write a 4-5 sentence intelligence briefing for sophisticated investors covering: the dominant market/crypto theme today, key commodity moves, what prediction markets are pricing in, and one key risk. Be direct — no filler.\n\nStocks: ${topStocks}\nCrypto: ${topCrypto}\nCommodities: ${topComm}\n\nNews:\n${nStr}\n\nPolymarket:\n${pStr}`;
     try{
       const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
       const data=await res.json();setBrief(data.content?.map(b=>b.text||"").join("")||"Unable to generate.");
@@ -1075,20 +1333,23 @@ export default function App(){
     setBriefing(false);setBriefDone(true);
   }
 
-  const isBuy=(t)=>(t.transactionType||"").toLowerCase().match(/buy|purchase/);
-  const TABS=["overview","markets","crypto","watchlist","congress","polymarket","signals"];
+  const TABS=["overview","markets","crypto","commodities","bonds","watchlist","polymarket","signals"];
 
   const C={bg:"#f8fafc",surface:"#ffffff",border:"#e2e8f0",text:"#1e293b",muted:"#64748b",faint:"#94a3b8",accent:"#2563eb",accentBg:"#eff6ff",green:"#0ea569",greenBg:"#f0fdf4",red:"#e53e3e",redBg:"#fff5f5",amber:"#d97706",amberBg:"#fffbeb",sans:"'Plus Jakarta Sans',sans-serif",mono:"'JetBrains Mono',monospace"};
   const card={background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:20};
   const secTitle={fontSize:11,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:C.faint,marginBottom:14,fontFamily:C.sans};
 
   const pinnedItems=[...pinned].map(id=>allQ[id]).filter(Boolean);
-  const pinnedStocks=pinnedItems.filter(q=>!isCryptoQ(q));
-  const pinnedCrypto=pinnedItems.filter(q=>isCryptoQ(q));
+  const pinnedStocks=pinnedItems.filter(q=>q.type==="stock"||q.type==="etf");
+  const pinnedCrypto=pinnedItems.filter(q=>q.type==="crypto");
+  const pinnedCommodities=pinnedItems.filter(q=>q.type==="commodity");
+  const pinnedBonds=pinnedItems.filter(q=>q.type==="bond");
 
   // Resolve visible items from IDs
   const visibleStockItems=visibleStocks.map(id=>allQ[id]).filter(Boolean);
   const visibleCryptoItems=visibleCrypto.map(id=>allQ[id]).filter(Boolean);
+  const visibleCommodityItems=visibleCommodities.map(id=>allQ[id]).filter(Boolean);
+  const visibleBondItems=visibleBonds.map(id=>allQ[id]).filter(Boolean);
 
   const cryptoList=Object.values(cryptoQ).filter(q=>!cryptoSearch||q.name.toLowerCase().includes(cryptoSearch.toLowerCase())||q.symbol.toLowerCase().includes(cryptoSearch.toLowerCase()));
 
@@ -1114,6 +1375,51 @@ export default function App(){
       <PinBtn id={q.id} pinned={pinned} onToggle={togglePin}/>
     </div>
   );};
+
+  const CommodityRow=({q})=>{
+    const up=(q.dp||0)>=0;
+    const Icon=COMMODITY_ICONS[q.id];
+    return(
+      <div className="rh" style={{display:"flex",alignItems:"center",gap:9,padding:"8px",borderRadius:8,marginBottom:2}} onClick={()=>setModal(q)}>
+        {Icon?<div style={{flexShrink:0}}>{Icon(34)}</div>
+          :<div style={{width:34,height:34,borderRadius:9,background:`${q.color}15`,border:`1px solid ${q.color}30`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:9,fontWeight:700,color:q.color}}>{q.id.replace("=F","").slice(0,4)}</span></div>}
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:13,fontWeight:600,color:C.text}}>{q.name}</div>
+          <div style={{fontSize:11,color:C.faint,textTransform:"capitalize"}}>{q.category} · per {q.unit}</div>
+        </div>
+        <Spark up={up} w={50} h={24}/>
+        <div style={{textAlign:"right",minWidth:80}}>
+          <div style={{fontSize:13,fontWeight:700,color:C.text,fontFamily:C.mono}}>${fmtPrice(q.c)}</div>
+          <div style={{fontSize:11,fontWeight:600,color:up?C.green:C.red,fontFamily:C.mono}}>{fmtPct(q.dp)}</div>
+        </div>
+        <PinBtn id={q.id} pinned={pinned} onToggle={togglePin}/>
+      </div>
+    );
+  };
+
+  const BondRow=({q})=>{
+    const up=(q.dp||0)>=0;
+    return(
+      <div className="rh" style={{display:"flex",alignItems:"center",gap:9,padding:"8px",borderRadius:8,marginBottom:2}} onClick={()=>setModal(q)}>
+        <BondIcon bond={q} size={34}/>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:13,fontWeight:600,color:C.text}}>{q.name}</div>
+          <div style={{fontSize:11,color:C.faint}}>US Treasury · {q.tenor}</div>
+        </div>
+        <div style={{flex:0,minWidth:120,textAlign:"center"}}>
+          <div style={{height:4,background:C.bg,borderRadius:99,overflow:"hidden",width:100,margin:"0 auto"}}>
+            <div style={{width:`${Math.min(100,((q.c||0)/6)*100)}%`,height:"100%",background:q.color,borderRadius:99}}/>
+          </div>
+          <div style={{fontSize:10,color:C.faint,marginTop:2}}>yield gauge</div>
+        </div>
+        <div style={{textAlign:"right",minWidth:72}}>
+          <div style={{fontSize:15,fontWeight:700,color:q.color,fontFamily:C.mono}}>{(q.c||0).toFixed(2)}%</div>
+          <div style={{fontSize:11,fontWeight:600,color:up?C.green:C.red,fontFamily:C.mono}}>{fmtPct(q.dp)}</div>
+        </div>
+        <PinBtn id={q.id} pinned={pinned} onToggle={togglePin}/>
+      </div>
+    );
+  };
 
   return(
     <div style={{background:C.bg,minHeight:"100vh",color:C.text,fontFamily:C.sans}}>
@@ -1166,8 +1472,14 @@ export default function App(){
       <WatchlistStrip pinned={pinned} allQ={allQ} onSelect={setModal} onUnpin={togglePin} C={C}/>
 
       {modal&&<AssetModal q={modal} onClose={()=>setModal(null)} C={C} pinned={pinned} onToggle={togglePin}/>}
-      {customiseType&&<CustomiseModal type={customiseType} allQ={allQ} visible={customiseType==="stock"?visibleStocks:visibleCrypto}
-        onSave={(ids)=>{if(customiseType==="stock")setVisibleStocks(ids);else setVisibleCrypto(ids);setCustomiseType(null);}}
+      {customiseType&&<CustomiseModal type={customiseType} allQ={allQ} visible={customiseType==="stock"?visibleStocks:customiseType==="crypto"?visibleCrypto:customiseType==="commodity"?visibleCommodities:visibleBonds}
+        onSave={(ids)=>{
+          if(customiseType==="stock")setVisibleStocks(ids);
+          else if(customiseType==="crypto")setVisibleCrypto(ids);
+          else if(customiseType==="commodity")setVisibleCommodities(ids);
+          else setVisibleBonds(ids);
+          setCustomiseType(null);
+        }}
         onClose={()=>setCustomiseType(null)} C={C}/>}
 
       <div style={{maxWidth:1200,margin:"0 auto",padding:"20px"}}>
@@ -1206,7 +1518,15 @@ export default function App(){
             <AssetStrip items={visibleCryptoItems} onSelect={setModal} onPin={togglePin} pinned={pinned} onCustomise={()=>setCustomiseType("crypto")} label="Crypto" accent="#7c3aed" C={C}/>
           </div>
 
-          {/* Top gainer / loser */}
+          {/* Scrollable commodity strip */}
+          <div style={{marginBottom:14}}>
+            <AssetStrip items={visibleCommodityItems} onSelect={setModal} onPin={togglePin} pinned={pinned} onCustomise={()=>setCustomiseType("commodity")} label="Commodities" accent="#f59e0b" C={C}/>
+          </div>
+
+          {/* Scrollable bond strip */}
+          <div style={{marginBottom:14}}>
+            <AssetStrip items={visibleBondItems} onSelect={setModal} onPin={togglePin} pinned={pinned} onCustomise={()=>setCustomiseType("bond")} label="Government Bonds · Yield %" accent="#0891b2" C={C}/>
+          </div>
           <div style={{marginBottom:14}}>
             <GainerLoserSection cryptoQ={cryptoQ} onSelect={setModal} C={C}/>
           </div>
@@ -1222,31 +1542,18 @@ export default function App(){
                 </div>
               ))}
             </div>
-            <div style={{display:"grid",gridTemplateRows:"auto auto",gap:14}}>
-              <div style={card}>
-                <div style={secTitle}>Polymarket Odds</div>
-                {poly.slice(0,3).map(p=>(
-                  <div key={p.id} style={{padding:"8px 0",borderBottom:`1px solid ${C.border}`}}>
-                    <div style={{fontSize:12,color:C.text,fontWeight:500,marginBottom:6,lineHeight:1.35}}>{p.question}</div>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <div style={{flex:1,height:5,background:"#f1f5f9",borderRadius:99,overflow:"hidden"}}><div style={{width:`${p.yes}%`,height:"100%",borderRadius:99,background:p.yes>60?C.green:p.yes>35?"#f59e0b":C.red}}/></div>
-                      <span style={{fontFamily:C.mono,fontSize:12,fontWeight:700,color:p.yes>50?C.green:C.amber,minWidth:32,textAlign:"right"}}>{p.yes}%</span>
-                      <span style={{fontSize:10,color:C.faint}}>{p.volume}</span>
-                    </div>
+            <div style={card}>
+              <div style={secTitle}>Polymarket Odds</div>
+              {poly.slice(0,5).map(p=>(
+                <div key={p.id} style={{padding:"8px 0",borderBottom:`1px solid ${C.border}`}}>
+                  <div style={{fontSize:12,color:C.text,fontWeight:500,marginBottom:6,lineHeight:1.35}}>{p.question}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{flex:1,height:5,background:"#f1f5f9",borderRadius:99,overflow:"hidden"}}><div style={{width:`${p.yes}%`,height:"100%",borderRadius:99,background:p.yes>60?C.green:p.yes>35?"#f59e0b":C.red}}/></div>
+                    <span style={{fontFamily:C.mono,fontSize:12,fontWeight:700,color:p.yes>50?C.green:C.amber,minWidth:32,textAlign:"right"}}>{p.yes}%</span>
+                    <span style={{fontSize:10,color:C.faint}}>{p.volume}</span>
                   </div>
-                ))}
-              </div>
-              <div style={card}>
-                <div style={secTitle}>Congress Trades</div>
-                {congress.slice(0,4).map((t,i)=>{const buy=isBuy(t);const p=t.party||(i%2===0?"D":"R");return(
-                  <div key={i} className="rh" onClick={()=>{const q=allQ[t.symbol]||{id:t.symbol,ticker:t.symbol,name:t.symbol,c:0,dp:0,type:"stock"};setModal(q);}} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 8px",borderRadius:8,marginBottom:2}}>
-                    <span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:6,background:p==="D"?"#eff6ff":"#fff5f5",color:p==="D"?"#2563eb":"#e53e3e",flexShrink:0}}>{p}</span>
-                    <span style={{flex:1,fontSize:12,color:C.text,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.name}</span>
-                    <span style={{fontFamily:C.mono,fontSize:12,fontWeight:700,color:C.accent,flexShrink:0}}>{t.symbol}</span>
-                    <span style={{fontSize:11,fontWeight:700,padding:"2px 7px",borderRadius:6,background:buy?C.greenBg:C.redBg,color:buy?C.green:C.red,flexShrink:0}}>{buy?"BUY":"SELL"}</span>
-                  </div>
-                );})}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>}
@@ -1354,31 +1661,86 @@ export default function App(){
                 );})}
               </div>
               {pinnedStocks.length>0&&<div style={{...card,marginBottom:14}}><div style={secTitle}>Pinned Stocks & ETFs <span style={{background:C.accentBg,color:C.accent,borderRadius:10,padding:"1px 6px",fontSize:10,marginLeft:4}}>{pinnedStocks.length}</span></div>{pinnedStocks.map(q=><StockRow key={q.id} q={q}/>)}</div>}
-              {pinnedCrypto.length>0&&<div style={card}><div style={secTitle}>Pinned Crypto <span style={{background:"#f5f3ff",color:"#7c3aed",borderRadius:10,padding:"1px 6px",fontSize:10,marginLeft:4}}>{pinnedCrypto.length}</span></div>{pinnedCrypto.map(q=><CryptoRow key={q.id} q={q}/>)}</div>}
+              {pinnedCrypto.length>0&&<div style={{...card,marginBottom:14}}><div style={secTitle}>Pinned Crypto <span style={{background:"#f5f3ff",color:"#7c3aed",borderRadius:10,padding:"1px 6px",fontSize:10,marginLeft:4}}>{pinnedCrypto.length}</span></div>{pinnedCrypto.map(q=><CryptoRow key={q.id} q={q}/>)}</div>}
+              {pinnedCommodities.length>0&&<div style={{...card,marginBottom:14}}><div style={secTitle}>Pinned Commodities <span style={{background:"#fffbeb",color:C.amber,borderRadius:10,padding:"1px 6px",fontSize:10,marginLeft:4}}>{pinnedCommodities.length}</span></div>{pinnedCommodities.map(q=><CommodityRow key={q.id} q={q}/>)}</div>}
+              {pinnedBonds.length>0&&<div style={card}><div style={secTitle}>Pinned Bonds <span style={{background:"#eff6ff",color:C.accent,borderRadius:10,padding:"1px 6px",fontSize:10,marginLeft:4}}>{pinnedBonds.length}</span></div>{pinnedBonds.map(q=><BondRow key={q.id} q={q}/>)}</div>}
             </>
           )}
         </div>}
 
         {/* ══ CONGRESS ══ */}
-        {tab==="congress"&&<div style={{animation:"fadeUp 0.25s ease"}}>
-          <div style={{...card,marginBottom:14,background:C.amberBg,borderColor:"#fde68a"}}><p style={{fontSize:13,color:C.amber,lineHeight:1.6}}>Disclosures required within 45 days under STOCK Act (2012). {isDemo?`Demo data.`:`${congress.length} trades loaded.`} Click any row to open the stock.</p></div>
+        {/* ══ COMMODITIES ══ */}
+        {tab==="commodities"&&<div style={{animation:"fadeUp 0.25s ease"}}>
+          {/* Category cards */}
+          {["metal","energy","agri"].map(cat=>{
+            const items=Object.values(commodityQ).filter(q=>q.category===cat);
+            if(!items.length)return null;
+            const labels={metal:"Precious & Industrial Metals",energy:"Energy",agri:"Agriculture"};
+            const colors={metal:"#f59e0b",energy:"#0ea569",agri:"#84cc16"};
+            return(
+              <div key={cat} style={{...card,marginBottom:14}}>
+                <div style={{...secTitle,color:colors[cat]}}>{labels[cat]}</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:8}}>
+                  {items.map(q=>{
+                    const up=(q.dp||0)>=0;
+                    const Icon=COMMODITY_ICONS[q.id];
+                    return(
+                      <div key={q.id} className="rh ch" style={{display:"flex",alignItems:"center",gap:10,padding:"12px",borderRadius:12,border:`1px solid ${C.border}`,cursor:"pointer",position:"relative"}} onClick={()=>setModal(q)}>
+                        <div style={{position:"absolute",top:8,right:8}} onClick={e=>e.stopPropagation()}><PinBtn id={q.id} pinned={pinned} onToggle={togglePin}/></div>
+                        {Icon?<div style={{flexShrink:0}}>{Icon(38)}</div>
+                          :<div style={{width:38,height:38,borderRadius:10,background:`${q.color}15`,border:`1px solid ${q.color}30`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:10,fontWeight:700,color:q.color}}>{q.id.replace("=F","")}</span></div>}
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:700,color:C.text}}>{q.name}</div>
+                          <div style={{fontSize:10,color:C.faint,textTransform:"capitalize"}}>per {q.unit}</div>
+                        </div>
+                        <div style={{textAlign:"right"}}>
+                          <div style={{fontSize:16,fontWeight:800,color:C.text,fontFamily:C.mono}}>${fmtPrice(q.c)}</div>
+                          <div style={{fontSize:12,fontWeight:700,color:up?C.green:C.red}}>{fmtPct(q.dp)}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+          {/* Full list */}
           <div style={card}>
-            <div style={secTitle}>Recent Disclosures</div>
-            <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr>{["Member","Party","Ticker","Action","Amount","Date"].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,fontWeight:700,color:C.faint,letterSpacing:"0.06em",textTransform:"uppercase",borderBottom:`1px solid ${C.border}`}}>{h}</th>)}</tr></thead>
-                <tbody>{congress.map((t,i)=>{const buy=isBuy(t);const p=t.party||(i%2===0?"D":"R");return(
-                  <tr key={i} className="rh" onClick={()=>{const q=allQ[t.symbol]||{id:t.symbol,ticker:t.symbol,name:t.symbol,c:0,dp:0,type:"stock"};setModal(q);}} style={{borderBottom:`1px solid ${C.border}`,cursor:"pointer"}}>
-                    <td style={{padding:"11px 12px",fontSize:13,fontWeight:600,color:C.text}}>{t.name}</td>
-                    <td style={{padding:"11px 12px"}}><span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:6,background:p==="D"?"#eff6ff":"#fff5f5",color:p==="D"?"#2563eb":"#e53e3e"}}>{p}</span></td>
-                    <td style={{padding:"11px 12px",fontFamily:C.mono,fontSize:13,fontWeight:700,color:C.accent}}>{t.symbol||t.ticker}</td>
-                    <td style={{padding:"11px 12px"}}><span style={{fontSize:12,fontWeight:700,padding:"2px 9px",borderRadius:6,background:buy?C.greenBg:C.redBg,color:buy?C.green:C.red}}>{buy?"BUY":"SELL"}</span></td>
-                    <td style={{padding:"11px 12px",fontSize:13,color:C.muted,fontFamily:C.mono}}>{t.amount||"—"}</td>
-                    <td style={{padding:"11px 12px",fontSize:12,color:C.faint,fontFamily:C.mono}}>{(t.transactionDate||"").slice(0,10)}</td>
-                  </tr>
-                );})}</tbody>
-              </table>
+            <div style={secTitle}>All Commodities</div>
+            {Object.values(commodityQ).map(q=><CommodityRow key={q.id} q={q}/>)}
+          </div>
+        </div>}
+
+        {/* ══ BONDS ══ */}
+        {tab==="bonds"&&<div style={{animation:"fadeUp 0.25s ease"}}>
+          {/* Yield curve visual */}
+          <div style={{...card,marginBottom:14}}>
+            <div style={secTitle}>US Treasury Yield Curve</div>
+            <div style={{display:"flex",alignItems:"flex-end",gap:8,height:120,padding:"10px 0"}}>
+              {Object.values(bondQ).sort((a,b)=>{const order={"^IRX":0,"^FVX":1,"^TNX":2,"^TYX":3};return(order[a.id]||0)-(order[b.id]||0);}).map(b=>{
+                const maxYield=6;
+                const pct=Math.min(100,((b.c||0)/maxYield)*100);
+                const up=(b.dp||0)>=0;
+                return(
+                  <div key={b.id} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                    <div style={{fontSize:11,fontWeight:700,color:b.color,fontFamily:C.mono}}>{(b.c||0).toFixed(2)}%</div>
+                    <div style={{width:"100%",position:"relative",height:80,display:"flex",alignItems:"flex-end"}}>
+                      <div style={{width:"100%",height:`${pct}%`,background:`linear-gradient(to top, ${b.color}, ${b.color}80)`,borderRadius:"6px 6px 0 0",transition:"height 0.5s",minHeight:8}}/>
+                    </div>
+                    <div style={{fontSize:10,fontWeight:600,color:C.muted}}>{b.tenor}</div>
+                    <div style={{fontSize:9,color:up?C.green:C.red,fontWeight:600}}>{fmtPct(b.dp)}</div>
+                  </div>
+                );
+              })}
             </div>
+            <div style={{fontSize:11,color:C.faint,marginTop:8,borderTop:`1px solid ${C.border}`,paddingTop:8}}>
+              Yield curve shows current US Treasury yields across maturities. An inverted curve (short rates &gt; long rates) has historically preceded recessions.
+            </div>
+          </div>
+          {/* Bond rows */}
+          <div style={card}>
+            <div style={secTitle}>US Government Bonds</div>
+            {Object.values(bondQ).sort((a,b)=>{const order={"^IRX":0,"^FVX":1,"^TNX":2,"^TYX":3};return(order[a.id]||0)-(order[b.id]||0);}).map(q=><BondRow key={q.id} q={q}/>)}
           </div>
         </div>}
 
