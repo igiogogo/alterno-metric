@@ -474,6 +474,145 @@ const DEMO_NEWS=[{id:1,source:"Reuters",headline:"Fed officials signal caution o
 const DEMO_CONGRESS=[{name:"Nancy Pelosi",party:"D",state:"CA",symbol:"NVDA",transactionType:"Buy",amount:"$1M–$5M",transactionDate:"2025-04-07"},{name:"Dan Crenshaw",party:"R",state:"TX",symbol:"LMT",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-05"},{name:"Josh Gottheimer",party:"D",state:"NJ",symbol:"MSFT",transactionType:"Sale",amount:"$500K–$1M",transactionDate:"2025-04-04"},{name:"Tommy Tuberville",party:"R",state:"AL",symbol:"XOM",transactionType:"Buy",amount:"$100K–$250K",transactionDate:"2025-04-03"},{name:"Ro Khanna",party:"D",state:"CA",symbol:"AMZN",transactionType:"Buy",amount:"$50K–$100K",transactionDate:"2025-04-02"}];
 const DEMO_TWEETS=[{handle:"RaoulGMI",name:"Raoul Pal",text:"The Everything Code keeps playing out. Liquidity drives all assets. Watch the Fed balance sheet, not the rate.",likes:"12.8K",time:"2h"},{handle:"elerianm",name:"Mohamed El-Erian",text:"Today's CPI print will be closely watched. Any upside surprise risks a sharp repricing in rate expectations.",likes:"7.1K",time:"3h"},{handle:"LukeGromen",name:"Luke Gromen",text:"The bond market is telling you something equities haven't priced yet. Fiscal dominance is here.",likes:"5.9K",time:"4h"},{handle:"naval",name:"Naval Ravikant",text:"Inflation is a hidden tax on savers. The monetary system redistributes from the cautious to the leveraged.",likes:"31.4K",time:"1h"},{handle:"APompliano",name:"Anthony Pompliano",text:"Bitcoin is up on the day while the dollar weakens. This is the trade of the decade.",likes:"9.3K",time:"2h"},{handle:"zerohedge",name:"ZeroHedge",text:"JPMorgan cuts GDP forecast — stagflation risks rising, strategists warn.",likes:"6.4K",time:"3h"}];
 
+// ─── TWITTER LIST EMBED ───────────────────────────────────────────────────────
+// To use your own list: go to twitter.com → Lists → create a list of finance accounts
+// → open the list → copy the list ID from the URL (twitter.com/i/lists/XXXXXXXX)
+// → set YOUR_LIST_ID below or pass it as a prop
+
+const DEFAULT_LIST_ID = "1369026195088871424"; // Curated macro/finance list (public)
+
+const FINANCE_ACCOUNTS = [
+  {handle:"RaoulGMI",      name:"Raoul Pal",         desc:"Global macro, liquidity cycles"},
+  {handle:"elerianm",      name:"Mohamed El-Erian",  desc:"Chief economist, geopolitics"},
+  {handle:"LukeGromen",    name:"Luke Gromen",        desc:"Fiscal dominance, dollar"},
+  {handle:"PeterSchiff",   name:"Peter Schiff",       desc:"Gold, Austrian economics"},
+  {handle:"APompliano",    name:"Anthony Pompliano",  desc:"Bitcoin, markets"},
+  {handle:"NickTimiraos",  name:"Nick Timiraos",      desc:"WSJ Fed reporter"},
+  {handle:"jnordvig",      name:"Jens Nordvig",       desc:"FX, macro strategy"},
+  {handle:"profplum99",    name:"Michael Plum",       desc:"Rates, macro"},
+  {handle:"zerohedge",     name:"ZeroHedge",          desc:"Markets, credit"},
+  {handle:"fleckenstein",  name:"Bill Fleckenstein",  desc:"Short selling, macro"},
+];
+
+function TwitterFeed({C}){
+  const [listId, setListId] = useState(DEFAULT_LIST_ID);
+  const [editMode, setEditMode] = useState(false);
+  const [inputVal, setInputVal] = useState(DEFAULT_LIST_ID);
+  const iframeRef = useRef(null);
+
+  const embedSrc = `https://platform.twitter.com/embed/List.html?dnt=true&id=${listId}&theme=light&chrome=noheader%20nofooter&lang=en`;
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:0,height:"100%"}}>
+      {/* Header */}
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:"16px 16px 0 0",padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          {/* X logo */}
+          <div style={{width:32,height:32,borderRadius:9,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </div>
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:C.text}}>Finance Twitter · Live Feed</div>
+            <div style={{fontSize:11,color:C.faint}}>Embedded Twitter List — no API key required</div>
+          </div>
+        </div>
+        <button onClick={()=>{setEditMode(e=>!e);setInputVal(listId);}}
+          style={{padding:"5px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",fontSize:12,fontWeight:600,color:C.muted,cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+          {editMode?"Cancel":"⚙ Use my list"}
+        </button>
+      </div>
+
+      {/* List ID editor */}
+      {editMode&&(
+        <div style={{background:"#fffbeb",border:`1px solid #fde68a`,borderTop:"none",padding:"12px 18px",display:"flex",gap:8,alignItems:"center"}}>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#92400e",marginBottom:4}}>
+              Paste your Twitter List ID — go to twitter.com → Lists → open your list → copy the number from the URL
+            </div>
+            <input value={inputVal} onChange={e=>setInputVal(e.target.value)}
+              placeholder="e.g. 1369026195088871424"
+              style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #fde68a",fontSize:12,fontFamily:"'JetBrains Mono',monospace",background:"white",outline:"none"}}/>
+          </div>
+          <button onClick={()=>{if(inputVal.trim())setListId(inputVal.trim());setEditMode(false);}}
+            style={{padding:"8px 16px",borderRadius:9,border:"none",background:"#000",color:"white",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif",flexShrink:0}}>
+            Apply
+          </button>
+        </div>
+      )}
+
+      {/* Embedded Twitter List iframe */}
+      <div style={{flex:1,background:C.surface,border:`1px solid ${C.border}`,borderTop:"none",borderRadius:"0 0 16px 16px",overflow:"hidden",minHeight:600}}>
+        <iframe
+          ref={iframeRef}
+          src={embedSrc}
+          style={{width:"100%",height:"100%",minHeight:600,border:"none",display:"block"}}
+          title="Finance Twitter Feed"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+        />
+      </div>
+
+      {/* Accounts in this list */}
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:16,marginTop:12}}>
+        <div style={{fontSize:11,fontWeight:700,color:C.faint,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:12,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+          Suggested accounts to add to your list
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          {FINANCE_ACCOUNTS.map(a=>(
+            <a key={a.handle} href={`https://twitter.com/${a.handle}`} target="_blank" rel="noreferrer"
+              style={{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",borderRadius:10,background:C.bg,border:`1px solid ${C.border}`,textDecoration:"none",transition:"all 0.15s"}}
+              onMouseEnter={e=>e.currentTarget.style.borderColor="#bfdbfe"}
+              onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+              <div style={{width:30,height:30,borderRadius:9,background:"linear-gradient(135deg,#1da1f2,#0d47a1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11,fontWeight:700,color:"white"}}>
+                {a.name[0]}
+              </div>
+              <div style={{minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:700,color:C.text}}>{a.name}</div>
+                <div style={{fontSize:10,color:C.faint,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.desc}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── COMBINED SIGNALS TAB ─────────────────────────────────────────────────────
+function SignalsTab({C,allQ,onSelect}){
+  const [activePanel, setActivePanel] = useState("both"); // "both"|"reddit"|"twitter"
+  return(
+    <div style={{animation:"fadeUp 0.25s ease"}}>
+      {/* Panel switcher */}
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:700,color:C.text}}>Signals</div>
+        <div style={{display:"flex",gap:4,marginLeft:"auto"}}>
+          {[
+            {id:"both",    label:"Both"},
+            {id:"reddit",  label:"Reddit"},
+            {id:"twitter", label:"Twitter"},
+          ].map(p=>(
+            <button key={p.id} onClick={()=>setActivePanel(p.id)} style={{
+              padding:"5px 12px",borderRadius:8,fontSize:12,fontWeight:600,border:"none",
+              cursor:"pointer",fontFamily:"'Plus Jakarta Sans',sans-serif",transition:"all 0.15s",
+              background:activePanel===p.id?"#1e293b":"#f1f5f9",
+              color:activePanel===p.id?"white":C.muted,
+            }}>{p.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {activePanel==="both"&&(
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"start"}}>
+          <RedditSignals C={C} allQ={allQ} onSelect={onSelect}/>
+          <TwitterFeed C={C}/>
+        </div>
+      )}
+      {activePanel==="reddit"&&<RedditSignals C={C} allQ={allQ} onSelect={onSelect}/>}
+      {activePanel==="twitter"&&<TwitterFeed C={C}/>}
+    </div>
+  );
+}
+
 // ─── REDDIT SIGNALS ───────────────────────────────────────────────────────────
 const APEWISDOM = "/api/reddit";
 
@@ -1205,7 +1344,7 @@ export default function App(){
         </div>}
 
         {/* ══ SIGNALS ══ */}
-        {tab==="signals"&&<RedditSignals C={C} allQ={allQ} onSelect={setModal}/>}
+        {tab==="signals"&&<SignalsTab C={C} allQ={allQ} onSelect={setModal}/>}
 
       </div>
 
