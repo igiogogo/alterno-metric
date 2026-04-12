@@ -16,7 +16,7 @@ const STOCK_LOGOS={
   AAPL: "https://logo.clearbit.com/apple.com",
   TSLA: "https://logo.clearbit.com/tesla.com",
   META: "https://logo.clearbit.com/meta.com",
-  MSFT: "https://logo.cleååååarbit.com/microsoft.com",
+  MSFT: "https://logo.clearbit.com/microsoft.com",
   AMZN: "https://logo.clearbit.com/amazon.com",
   GOOGL:"https://logo.clearbit.com/google.com",
   GOOG: "https://logo.clearbit.com/google.com",
