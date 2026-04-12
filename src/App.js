@@ -1685,17 +1685,19 @@ export default function App(){
                     const up=(q.dp||0)>=0;
                     const Icon=COMMODITY_ICONS[q.id];
                     return(
-                      <div key={q.id} className="rh ch" style={{display:"flex",alignItems:"center",gap:10,padding:"12px",borderRadius:12,border:`1px solid ${C.border}`,cursor:"pointer",position:"relative"}} onClick={()=>setModal(q)}>
-                        <div style={{position:"absolute",top:8,right:8}} onClick={e=>e.stopPropagation()}><PinBtn id={q.id} pinned={pinned} onToggle={togglePin}/></div>
+                      <div key={q.id} className="rh ch" style={{display:"flex",alignItems:"center",gap:10,padding:"12px 10px 12px 12px",borderRadius:12,border:`1px solid ${C.border}`,cursor:"pointer"}} onClick={()=>setModal(q)}>
                         {Icon?<div style={{flexShrink:0}}>{Icon(38)}</div>
                           :<div style={{width:38,height:38,borderRadius:10,background:`${q.color}15`,border:`1px solid ${q.color}30`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:10,fontWeight:700,color:q.color}}>{q.id.replace("=F","")}</span></div>}
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:13,fontWeight:700,color:C.text}}>{q.name}</div>
                           <div style={{fontSize:10,color:C.faint,textTransform:"capitalize"}}>per {q.unit}</div>
                         </div>
-                        <div style={{textAlign:"right"}}>
+                        <div style={{textAlign:"right",marginRight:4}}>
                           <div style={{fontSize:16,fontWeight:800,color:C.text,fontFamily:C.mono}}>${fmtPrice(q.c)}</div>
                           <div style={{fontSize:12,fontWeight:700,color:up?C.green:C.red}}>{fmtPct(q.dp)}</div>
+                        </div>
+                        <div onClick={e=>e.stopPropagation()} style={{flexShrink:0}}>
+                          <PinBtn id={q.id} pinned={pinned} onToggle={togglePin}/>
                         </div>
                       </div>
                     );
@@ -1716,19 +1718,19 @@ export default function App(){
           {/* Yield curve visual */}
           <div style={{...card,marginBottom:14}}>
             <div style={secTitle}>US Treasury Yield Curve</div>
-            <div style={{display:"flex",alignItems:"flex-end",gap:8,height:120,padding:"10px 0"}}>
+            <div style={{display:"flex",alignItems:"flex-end",gap:12,height:140,padding:"10px 0 0 0"}}>
               {Object.values(bondQ).sort((a,b)=>{const order={"^IRX":0,"^FVX":1,"^TNX":2,"^TYX":3};return(order[a.id]||0)-(order[b.id]||0);}).map(b=>{
                 const maxYield=6;
-                const pct=Math.min(100,((b.c||0)/maxYield)*100);
+                const barPx=Math.max(10,Math.round(((b.c||0)/maxYield)*90)); // max 90px bar
                 const up=(b.dp||0)>=0;
                 return(
-                  <div key={b.id} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                    <div style={{fontSize:11,fontWeight:700,color:b.color,fontFamily:C.mono}}>{(b.c||0).toFixed(2)}%</div>
-                    <div style={{width:"100%",position:"relative",height:80,display:"flex",alignItems:"flex-end"}}>
-                      <div style={{width:"100%",height:`${pct}%`,background:`linear-gradient(to top, ${b.color}, ${b.color}80)`,borderRadius:"6px 6px 0 0",transition:"height 0.5s",minHeight:8}}/>
+                  <div key={b.id} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                    <div style={{fontSize:12,fontWeight:700,color:b.color,fontFamily:C.mono,marginBottom:4}}>{(b.c||0).toFixed(2)}%</div>
+                    <div style={{width:"100%",display:"flex",alignItems:"flex-end",height:90}}>
+                      <div style={{width:"100%",height:barPx,background:`linear-gradient(to top, ${b.color}, ${b.color}80)`,borderRadius:"6px 6px 0 0",transition:"height 0.6s ease"}}/>
                     </div>
-                    <div style={{fontSize:10,fontWeight:600,color:C.muted}}>{b.tenor}</div>
-                    <div style={{fontSize:9,color:up?C.green:C.red,fontWeight:600}}>{fmtPct(b.dp)}</div>
+                    <div style={{fontSize:11,fontWeight:600,color:C.muted,marginTop:6}}>{b.tenor}</div>
+                    <div style={{fontSize:10,color:up?C.green:C.red,fontWeight:600}}>{fmtPct(b.dp)}</div>
                   </div>
                 );
               })}
