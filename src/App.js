@@ -475,7 +475,7 @@ const DEMO_CONGRESS=[{name:"Nancy Pelosi",party:"D",state:"CA",symbol:"NVDA",tra
 const DEMO_TWEETS=[{handle:"RaoulGMI",name:"Raoul Pal",text:"The Everything Code keeps playing out. Liquidity drives all assets. Watch the Fed balance sheet, not the rate.",likes:"12.8K",time:"2h"},{handle:"elerianm",name:"Mohamed El-Erian",text:"Today's CPI print will be closely watched. Any upside surprise risks a sharp repricing in rate expectations.",likes:"7.1K",time:"3h"},{handle:"LukeGromen",name:"Luke Gromen",text:"The bond market is telling you something equities haven't priced yet. Fiscal dominance is here.",likes:"5.9K",time:"4h"},{handle:"naval",name:"Naval Ravikant",text:"Inflation is a hidden tax on savers. The monetary system redistributes from the cautious to the leveraged.",likes:"31.4K",time:"1h"},{handle:"APompliano",name:"Anthony Pompliano",text:"Bitcoin is up on the day while the dollar weakens. This is the trade of the decade.",likes:"9.3K",time:"2h"},{handle:"zerohedge",name:"ZeroHedge",text:"JPMorgan cuts GDP forecast — stagflation risks rising, strategists warn.",likes:"6.4K",time:"3h"}];
 
 // ─── REDDIT SIGNALS ───────────────────────────────────────────────────────────
-const APEWISDOM = "https://apewisdom.io/api/v1.0";
+const APEWISDOM = "/api/reddit";
 
 const SUBREDDITS = [
   {id:"all-stocks",  label:"All Stock Subs",  type:"stock",  color:"#ff4500"},
@@ -499,7 +499,7 @@ function RedditSignals({C,allQ,onSelect}){
   const fetchData=useCallback(async(f)=>{
     setLoading(true);setError(false);
     try{
-      const res=await fetch(`${APEWISDOM}/filter/${f}`);
+      const res=await fetch(`${APEWISDOM}?filter=${f}`);
       if(!res.ok)throw new Error("API error");
       const d=await res.json();
       setData(d.results||[]);
